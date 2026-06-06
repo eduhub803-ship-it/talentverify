@@ -1,5 +1,6 @@
 import type {
   AdminStats,
+  AppNotification,
   CandidateProfile,
   CandidateRecord,
   CandidateJobApplicationContext,
@@ -35,6 +36,7 @@ interface MockDb {
   jobs: Job[]
   applications: JobApplication[]
   usageLimits: UsageLimit[]
+  notifications: AppNotification[]
   passwordByEmail: Record<string, string>
 }
 
@@ -184,6 +186,7 @@ function seedDb(): MockDb {
     jobs: createSeedJobs(hrId, now),
     applications: [],
     usageLimits: [],
+    notifications: [],
     candidateRecords: [
       {
         id: candidateId,
@@ -249,6 +252,7 @@ function loadDb(): MockDb {
     db.jobs = hrId ? createSeedJobs(hrId, new Date().toISOString()) : []
   }
   if (!db.applications) db.applications = []
+  if (!db.notifications) db.notifications = []
   return db
 }
 
@@ -257,6 +261,114 @@ function saveDb(db: MockDb) {
 }
 
 export const mockDb = {
+  addNotification(input: Omit<AppNotification, 'id' | 'isRead' | 'createdAt'>) {
+    const db = loadDb()
+    const notification: AppNotification = {
+      id: crypto.randomUUID(),
+      isRead: false,
+      createdAt: new Date().toISOString(),
+      ...input,
+    }
+    db.notifications.push(notification)
+    saveDb(db)
+    return notification
+  },
+
+  notifyAdmins(input: Omit<AppNotification, 'id' | 'isRead' | 'createdAt' | 'recipientUserId' | 'recipientRole'>) {
+    const db = loadDb()
+    const admins = db.profiles.filter((profile) => profile.role === 'admin')
+    const now = new Date().toISOString()
+    const notifications = admins.map((admin) => ({
+      id: crypto.randomUUID(),
+      recipientUserId: admin.id,
+      recipientRole: 'admin' as const,
+      isRead: false,
+      createdAt: now,
+      ...input,
+    }))
+    db.notifications.push(...notifications)
+    saveDb(db)
+    return notifications
+  },
+
+  notifyOrganizationUsers(
+    organizationId: string,
+    input: Omit<AppNotification, 'id' | 'isRead' | 'createdAt' | 'recipientUserId' | 'recipientRole' | 'recipientOrganizationId'>,
+  ) {
+    const db = loadDb()
+    const members = db.hrMembers.filter((member) => member.organizationId === organizationId)
+    const now = new Date().toISOString()
+    const notifications = members.map((member) => ({
+      id: crypto.randomUUID(),
+      recipientUserId: member.userId,
+      recipientRole: 'hr' as const,
+      recipientOrganizationId: organizationId,
+      isRead: false,
+      createdAt: now,
+      ...input,
+    }))
+    db.notifications.push(...notifications)
+    saveDb(db)
+    return notifications
+  },
+
+  getNotificationsForUser(currentUser: Profile): AppNotification[] {
+    const db = loadDb()
+    const membership = currentUser.role === 'hr'
+      ? db.hrMembers.find((member) => member.userId === currentUser.id)
+      : null
+
+    return db.notifications
+      .filter((notification) => {
+        if (currentUser.role === 'admin') {
+          return (
+            notification.recipientUserId === currentUser.id ||
+            notification.recipientRole === 'admin'
+          )
+        }
+        if (currentUser.role === 'hr') {
+          return (
+            notification.recipientUserId === currentUser.id ||
+            Boolean(
+              membership?.organizationId &&
+                notification.recipientRole === 'hr' &&
+                notification.recipientOrganizationId === membership.organizationId,
+            )
+          )
+        }
+        return notification.recipientUserId === currentUser.id
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+  },
+
+  markNotificationRead(currentUser: Profile, notificationId: string) {
+    const visible = this.getNotificationsForUser(currentUser).some(
+      (notification) => notification.id === notificationId,
+    )
+    if (!visible) return
+    const db = loadDb()
+    const idx = db.notifications.findIndex((notification) => notification.id === notificationId)
+    if (idx === -1) return
+    db.notifications[idx].isRead = true
+    saveDb(db)
+  },
+
+  markAllNotificationsRead(currentUser: Profile) {
+    const visibleIds = new Set(
+      this.getNotificationsForUser(currentUser).map((notification) => notification.id),
+    )
+    const db = loadDb()
+    db.notifications = db.notifications.map((notification) =>
+      visibleIds.has(notification.id)
+        ? { ...notification, isRead: true }
+        : notification,
+    )
+    saveDb(db)
+  },
+
   getSession(): { userId: string } | null {
     const id = sessionStorage.getItem('tv_session_user')
     return id ? { userId: id } : null
@@ -351,6 +463,37 @@ export const mockDb = {
         createdAt: now,
       })
       db.hrMembers.push({ userId: id, organizationId: orgId, isOwner: true })
+      db.notifications.push({
+        id: crypto.randomUUID(),
+        recipientUserId: id,
+        recipientRole: 'hr',
+        recipientOrganizationId: orgId,
+        type: 'hr_organization_pending',
+        title: 'Organization pending approval',
+        message: 'Your organization account is pending approval.',
+        entityType: 'organization',
+        entityId: orgId,
+        isRead: false,
+        priority: 'normal',
+        createdAt: now,
+      })
+      const admins = db.profiles.filter((profile) => profile.role === 'admin')
+      db.notifications.push(
+        ...admins.map((admin) => ({
+          id: crypto.randomUUID(),
+          recipientUserId: admin.id,
+          recipientRole: 'admin' as const,
+          recipientOrganizationId: orgId,
+          type: 'hr_organization_registered',
+          title: 'New HR organization pending approval',
+          message: `${input.organizationName} is pending approval.`,
+          entityType: 'organization',
+          entityId: orgId,
+          isRead: false,
+          priority: 'high' as const,
+          createdAt: now,
+        })),
+      )
     }
 
     saveDb(db)
@@ -404,6 +547,38 @@ export const mockDb = {
     if (idx === -1) throw new Error('Candidate not found')
     db.candidates[idx].verificationStatus = 'pending'
     db.candidates[idx].updatedAt = new Date().toISOString()
+    const candidateProfile = db.profiles.find((profile) => profile.id === userId)
+    const now = new Date().toISOString()
+    db.notifications.push({
+      id: crypto.randomUUID(),
+      recipientUserId: userId,
+      recipientRole: 'candidate',
+      type: 'candidate_verification_submitted',
+      title: 'Verification request submitted',
+      message: 'Your verification request was submitted.',
+      entityType: 'candidate',
+      entityId: userId,
+      isRead: false,
+      priority: 'normal',
+      createdAt: now,
+    })
+    db.notifications.push(
+      ...db.profiles
+        .filter((profile) => profile.role === 'admin')
+        .map((admin) => ({
+          id: crypto.randomUUID(),
+          recipientUserId: admin.id,
+          recipientRole: 'admin' as const,
+          type: 'candidate_verification_pending',
+          title: 'Candidate submitted verification',
+          message: `${candidateProfile?.fullName ?? candidateProfile?.email ?? 'Candidate'} submitted a verification request.`,
+          entityType: 'candidate',
+          entityId: userId,
+          isRead: false,
+          priority: 'high' as const,
+          createdAt: now,
+        })),
+    )
     saveDb(db)
   },
 
@@ -423,6 +598,19 @@ export const mockDb = {
       ...doc,
     }
     db.documents.push(record)
+    db.notifications.push({
+      id: crypto.randomUUID(),
+      recipientUserId: candidateId,
+      recipientRole: 'candidate',
+      type: 'document_uploaded',
+      title: 'Document uploaded',
+      message: `${record.fileName} was uploaded.`,
+      entityType: 'document',
+      entityId: record.id,
+      isRead: false,
+      priority: doc.type === 'cv' ? 'normal' : 'low',
+      createdAt: new Date().toISOString(),
+    })
     saveDb(db)
     if (doc.type === 'cv') {
       this.syncCandidateRecord(candidateId)
@@ -435,6 +623,19 @@ export const mockDb = {
     db.documents = db.documents.filter(
       (d) => !(d.id === documentId && d.candidateId === candidateId),
     )
+    db.notifications.push({
+      id: crypto.randomUUID(),
+      recipientUserId: candidateId,
+      recipientRole: 'candidate',
+      type: 'document_removed',
+      title: 'Document removed',
+      message: 'A document was removed from your profile.',
+      entityType: 'document',
+      entityId: documentId,
+      isRead: false,
+      priority: 'low',
+      createdAt: new Date().toISOString(),
+    })
     saveDb(db)
   },
 
@@ -532,6 +733,42 @@ export const mockDb = {
       createdAt: new Date().toISOString(),
     }
     db.contactRequests.push(record)
+    const hr = db.profiles.find((profile) => profile.id === input.hrUserId)
+    const org = db.organizations.find((item) => item.id === input.organizationId)
+    const candidate = db.profiles.find((profile) => profile.id === input.candidateId)
+    const now = new Date().toISOString()
+    db.notifications.push({
+      id: crypto.randomUUID(),
+      recipientUserId: input.candidateId,
+      recipientRole: 'candidate',
+      recipientOrganizationId: input.organizationId,
+      type: 'contact_request_received',
+      title: 'New contact request',
+      message: `${org?.name ?? 'An HR organization'} requested to contact you.`,
+      entityType: 'contact_request',
+      entityId: record.id,
+      isRead: false,
+      priority: 'high',
+      createdAt: now,
+    })
+    db.notifications.push(
+      ...db.hrMembers
+        .filter((member) => member.organizationId === input.organizationId)
+        .map((member) => ({
+          id: crypto.randomUUID(),
+          recipientUserId: member.userId,
+          recipientRole: 'hr' as const,
+          recipientOrganizationId: input.organizationId,
+          type: 'contact_request_sent',
+          title: 'Contact request sent',
+          message: `${hr?.fullName ?? hr?.email ?? 'Your team'} requested contact with ${candidate?.fullName ?? candidate?.email ?? 'a candidate'}.`,
+          entityType: 'contact_request',
+          entityId: record.id,
+          isRead: false,
+          priority: 'normal' as const,
+          createdAt: now,
+        })),
+    )
     saveDb(db)
     return record
   },
@@ -547,6 +784,27 @@ export const mockDb = {
     )
     if (idx === -1) throw new Error('Request not found')
     db.contactRequests[idx].status = status
+    const request = db.contactRequests[idx]
+    const candidate = db.profiles.find((profile) => profile.id === candidateId)
+    const now = new Date().toISOString()
+    db.notifications.push(
+      ...db.hrMembers
+        .filter((member) => member.organizationId === request.organizationId)
+        .map((member) => ({
+          id: crypto.randomUUID(),
+          recipientUserId: member.userId,
+          recipientRole: 'hr' as const,
+          recipientOrganizationId: request.organizationId,
+          type: 'contact_request_updated',
+          title: 'Contact request updated',
+          message: `${candidate?.fullName ?? candidate?.email ?? 'A candidate'} ${status} your contact request.`,
+          entityType: 'contact_request',
+          entityId: request.id,
+          isRead: false,
+          priority: 'normal' as const,
+          createdAt: now,
+        })),
+    )
     saveDb(db)
   },
 
@@ -591,6 +849,47 @@ export const mockDb = {
       createdAt: new Date().toISOString(),
     }
     db.jobs.push(job)
+    const member = db.hrMembers.find((item) => item.userId === input.createdBy)
+    if (member) {
+      const now = new Date().toISOString()
+      const org = db.organizations.find((item) => item.id === member.organizationId)
+      db.notifications.push(
+        ...db.hrMembers
+          .filter((item) => item.organizationId === member.organizationId)
+          .map((item) => ({
+            id: crypto.randomUUID(),
+            recipientUserId: item.userId,
+            recipientRole: 'hr' as const,
+            recipientOrganizationId: member.organizationId,
+            type: 'job_created',
+            title: 'Job posted',
+            message: `${job.title} was posted for ${org?.name ?? 'your organization'}.`,
+            entityType: 'job',
+            entityId: job.id,
+            isRead: false,
+            priority: 'normal' as const,
+            createdAt: now,
+          })),
+      )
+      db.notifications.push(
+        ...db.profiles
+          .filter((profile) => profile.role === 'admin')
+          .map((admin) => ({
+            id: crypto.randomUUID(),
+            recipientUserId: admin.id,
+            recipientRole: 'admin' as const,
+            recipientOrganizationId: member.organizationId,
+            type: 'job_created_admin',
+            title: 'HR posted a job',
+            message: `${org?.name ?? 'An HR organization'} posted ${job.title}.`,
+            entityType: 'job',
+            entityId: job.id,
+            isRead: false,
+            priority: 'low' as const,
+            createdAt: now,
+          })),
+      )
+    }
     saveDb(db)
     return job
   },
@@ -617,6 +916,63 @@ export const mockDb = {
     const idx = db.applications.findIndex((application) => application.id === applicationId)
     if (idx === -1) throw new Error('Application not found')
     db.applications[idx].status = status
+    const application = db.applications[idx]
+    const job = db.jobs.find((item) => item.id === application.jobId)
+    const candidate = db.profiles.find((profile) => profile.id === application.candidateId)
+    const member = job ? db.hrMembers.find((item) => item.userId === job.createdBy) : null
+    const now = new Date().toISOString()
+    db.notifications.push({
+      id: crypto.randomUUID(),
+      recipientUserId: application.candidateId,
+      recipientRole: 'candidate',
+      recipientOrganizationId: member?.organizationId ?? null,
+      type: 'application_status_updated',
+      title: 'Application status updated',
+      message: `Your application for ${job?.title ?? 'a job'} is now ${status}.`,
+      entityType: 'application',
+      entityId: application.id,
+      isRead: false,
+      priority: status === 'accepted' ? 'high' : 'normal',
+      createdAt: now,
+    })
+    if (member) {
+      db.notifications.push(
+        ...db.hrMembers
+          .filter((item) => item.organizationId === member.organizationId)
+          .map((item) => ({
+            id: crypto.randomUUID(),
+            recipientUserId: item.userId,
+            recipientRole: 'hr' as const,
+            recipientOrganizationId: member.organizationId,
+            type: 'application_status_updated_hr',
+            title: 'Application status updated',
+            message: `${candidate?.fullName ?? candidate?.email ?? 'A candidate'} was marked ${status} for ${job?.title ?? 'a job'}.`,
+            entityType: 'application',
+            entityId: application.id,
+            isRead: false,
+            priority: 'normal' as const,
+            createdAt: now,
+          })),
+      )
+    }
+    db.notifications.push(
+      ...db.profiles
+        .filter((profile) => profile.role === 'admin')
+        .map((admin) => ({
+          id: crypto.randomUUID(),
+          recipientUserId: admin.id,
+          recipientRole: 'admin' as const,
+          recipientOrganizationId: member?.organizationId ?? null,
+          type: 'application_status_updated_admin',
+          title: 'Hiring funnel updated',
+          message: `${candidate?.fullName ?? 'A candidate'} was marked ${status}.`,
+          entityType: 'application',
+          entityId: application.id,
+          isRead: false,
+          priority: 'low' as const,
+          createdAt: now,
+        })),
+    )
     saveDb(db)
     return {
       ...db.applications[idx],
@@ -696,6 +1052,61 @@ export const mockDb = {
       createdAt: new Date().toISOString(),
     }
     db.applications.push(application)
+    const candidate = db.profiles.find((profile) => profile.id === input.candidateId)
+    const member = db.hrMembers.find((item) => item.userId === job.createdBy)
+    const now = new Date().toISOString()
+    db.notifications.push({
+      id: crypto.randomUUID(),
+      recipientUserId: input.candidateId,
+      recipientRole: 'candidate',
+      recipientOrganizationId: member?.organizationId ?? null,
+      type: 'application_submitted',
+      title: 'Application submitted',
+      message: `Your application for ${job.title} was submitted.`,
+      entityType: 'application',
+      entityId: application.id,
+      isRead: false,
+      priority: 'normal',
+      createdAt: now,
+    })
+    if (member) {
+      db.notifications.push(
+        ...db.hrMembers
+          .filter((item) => item.organizationId === member.organizationId)
+          .map((item) => ({
+            id: crypto.randomUUID(),
+            recipientUserId: item.userId,
+            recipientRole: 'hr' as const,
+            recipientOrganizationId: member.organizationId,
+            type: 'application_received',
+            title: 'New job application',
+            message: `${candidate?.fullName ?? candidate?.email ?? 'A candidate'} applied to ${job.title}.`,
+            entityType: 'application',
+            entityId: application.id,
+            isRead: false,
+            priority: 'high' as const,
+            createdAt: now,
+          })),
+      )
+    }
+    db.notifications.push(
+      ...db.profiles
+        .filter((profile) => profile.role === 'admin')
+        .map((admin) => ({
+          id: crypto.randomUUID(),
+          recipientUserId: admin.id,
+          recipientRole: 'admin' as const,
+          recipientOrganizationId: member?.organizationId ?? null,
+          type: 'application_submitted_admin',
+          title: 'Candidate applied to a job',
+          message: `${candidate?.fullName ?? 'A candidate'} applied to ${job.title}.`,
+          entityType: 'application',
+          entityId: application.id,
+          isRead: false,
+          priority: 'low' as const,
+          createdAt: now,
+        })),
+    )
     saveDb(db)
     return {
       ...application,
@@ -738,6 +1149,41 @@ export const mockDb = {
     db.candidates[idx].verifiedAt =
       status === 'verified' ? new Date().toISOString() : null
     db.candidates[idx].updatedAt = new Date().toISOString()
+    const candidateProfile = db.profiles.find((profile) => profile.id === userId)
+    const now = new Date().toISOString()
+    db.notifications.push({
+      id: crypto.randomUUID(),
+      recipientUserId: userId,
+      recipientRole: 'candidate',
+      type: status === 'verified' ? 'candidate_verified' : 'candidate_rejected',
+      title: status === 'verified' ? 'Profile verified' : 'Verification update',
+      message:
+        status === 'verified'
+          ? 'Your profile has been verified.'
+          : 'Your verification request was reviewed. Please check your profile status.',
+      entityType: 'candidate',
+      entityId: userId,
+      isRead: false,
+      priority: 'high',
+      createdAt: now,
+    })
+    db.notifications.push(
+      ...db.profiles
+        .filter((profile) => profile.role === 'admin')
+        .map((admin) => ({
+          id: crypto.randomUUID(),
+          recipientUserId: admin.id,
+          recipientRole: 'admin' as const,
+          type: status === 'verified' ? 'candidate_verified_admin' : 'candidate_rejected_admin',
+          title: status === 'verified' ? 'Candidate verified' : 'Candidate rejected',
+          message: `${candidateProfile?.fullName ?? candidateProfile?.email ?? 'Candidate'} was ${status}.`,
+          entityType: 'candidate',
+          entityId: userId,
+          isRead: false,
+          priority: 'normal' as const,
+          createdAt: now,
+        })),
+    )
     saveDb(db)
     if (status === 'verified') {
       this.syncCandidateRecord(userId)
@@ -827,6 +1273,10 @@ export const mockDb = {
     return loadDb().organizations.filter((o) => o.status === 'pending')
   },
 
+  getHrOrgs(): HrOrganization[] {
+    return loadDb().organizations
+  },
+
   reviewHrOrg(orgId: string, approved: boolean) {
     const db = loadDb()
     const idx = db.organizations.findIndex((o) => o.id === orgId)
@@ -835,6 +1285,46 @@ export const mockDb = {
     db.organizations[idx].approvedAt = approved
       ? new Date().toISOString()
       : null
+    const org = db.organizations[idx]
+    const now = new Date().toISOString()
+    db.notifications.push(
+      ...db.hrMembers
+        .filter((member) => member.organizationId === orgId)
+        .map((member) => ({
+          id: crypto.randomUUID(),
+          recipientUserId: member.userId,
+          recipientRole: 'hr' as const,
+          recipientOrganizationId: orgId,
+          type: approved ? 'hr_organization_approved' : 'hr_organization_rejected',
+          title: approved ? 'Organization approved' : 'Organization review update',
+          message: approved
+            ? 'Your organization account has been approved.'
+            : 'Your organization account was reviewed. Please check your status.',
+          entityType: 'organization',
+          entityId: orgId,
+          isRead: false,
+          priority: 'high' as const,
+          createdAt: now,
+        })),
+    )
+    db.notifications.push(
+      ...db.profiles
+        .filter((profile) => profile.role === 'admin')
+        .map((admin) => ({
+          id: crypto.randomUUID(),
+          recipientUserId: admin.id,
+          recipientRole: 'admin' as const,
+          recipientOrganizationId: orgId,
+          type: approved ? 'hr_organization_approved_admin' : 'hr_organization_rejected_admin',
+          title: approved ? 'HR organization approved' : 'HR organization rejected',
+          message: `${org.name} was ${approved ? 'approved' : 'rejected'}.`,
+          entityType: 'organization',
+          entityId: orgId,
+          isRead: false,
+          priority: 'normal' as const,
+          createdAt: now,
+        })),
+    )
     saveDb(db)
   },
 

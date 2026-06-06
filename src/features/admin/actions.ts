@@ -27,6 +27,10 @@ export function fetchPendingHrOrganizations(): HrOrganization[] {
   return adminService.getPendingHrOrgs()
 }
 
+export function fetchHrOrganizations(): HrOrganization[] {
+  return adminService.getHrOrgs()
+}
+
 export function reviewHrOrganization(orgId: string, approved: boolean): void {
   adminService.reviewHrOrg(orgId, approved)
 }

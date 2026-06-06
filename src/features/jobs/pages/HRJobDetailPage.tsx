@@ -21,6 +21,8 @@ import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
 import type { ApplicationStatus } from '@/types/domain'
 import { fetchJobApplications, updateJobApplicationStatus } from '@/features/applications/actions'
+import { invalidateAdminWorkspace } from '@/features/admin/queryKeys'
+import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import { fetchHrJob } from '../actions'
 
 function applicationVariant(status: ApplicationStatus) {
@@ -66,6 +68,8 @@ export function HRJobDetailPage() {
     }) => updateJobApplicationStatus(userId, applicationId, status),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['applications', 'job', id] })
+      void invalidateAdminWorkspace(qc)
+      qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
     },
   })
 

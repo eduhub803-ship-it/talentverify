@@ -19,6 +19,23 @@ export type JobStatus = 'open' | 'closed'
 
 export type ApplicationStatus = 'pending' | 'accepted' | 'rejected'
 
+export type NotificationPriority = 'low' | 'normal' | 'high'
+
+export interface AppNotification {
+  id: string
+  recipientUserId: string | null
+  recipientRole: UserRole
+  recipientOrganizationId?: string | null
+  type: string
+  title: string
+  message: string
+  entityType: string
+  entityId: string
+  isRead: boolean
+  priority: NotificationPriority
+  createdAt: string
+}
+
 /** HR-facing candidate directory (Supabase `candidates` table) */
 export interface CandidateRecord {
   id: string

@@ -6,6 +6,7 @@ import { FileUpload } from '@/features/shared/components/ui/FileUpload'
 import { Card, CardBody } from '@/features/shared/components/ui/Card'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
+import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import { fetchMyDocuments, removeCandidateDocument, uploadCandidateDocument } from '../actions'
 import { DocumentList } from '../components/DocumentList'
 
@@ -22,12 +23,18 @@ export function UploadCVPage() {
 
   const upload = useMutation({
     mutationFn: (file: File) => uploadCandidateDocument(userId, file, 'cv'),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['candidate', 'documents', userId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['candidate', 'documents', userId] })
+      qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
+    },
   })
 
   const remove = useMutation({
     mutationFn: (id: string) => removeCandidateDocument(userId, id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['candidate', 'documents', userId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['candidate', 'documents', userId] })
+      qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
+    },
   })
 
   const canEdit = !isLoading

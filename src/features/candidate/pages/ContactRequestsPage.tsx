@@ -9,6 +9,7 @@ import { EmptyState } from '@/features/shared/components/layout/EmptyState'
 import { formatDate } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
+import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import { fetchContactRequests, respondToContactRequest } from '../actions'
 
 export function ContactRequestsPage() {
@@ -30,7 +31,10 @@ export function ContactRequestsPage() {
       id: string
       status: 'accepted' | 'declined'
     }) => respondToContactRequest(userId, id, status),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['candidate', 'contacts', userId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['candidate', 'contacts', userId] })
+      qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
+    },
   })
 
   if (isLoading) return null

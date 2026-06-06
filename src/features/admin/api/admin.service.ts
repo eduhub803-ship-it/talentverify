@@ -40,6 +40,11 @@ export const adminService = {
     return []
   },
 
+  getHrOrgs(): HrOrganization[] {
+    if (!isSupabaseConfigured) return mockDb.getHrOrgs()
+    return []
+  },
+
   reviewHrOrg(orgId: string, approved: boolean): void {
     if (!isSupabaseConfigured) {
       mockDb.reviewHrOrg(orgId, approved)

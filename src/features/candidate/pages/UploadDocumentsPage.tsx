@@ -6,6 +6,7 @@ import { Button } from '@/features/shared/components/ui/Button'
 import type { DocumentType } from '@/types/domain'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
+import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import {
   fetchMyDocuments,
   removeCandidateDocument,
@@ -33,12 +34,18 @@ export function UploadDocumentsPage() {
   const upload = useMutation({
     mutationFn: ({ file, type }: { file: File; type: DocumentType }) =>
       uploadCandidateDocument(userId, file, type),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['candidate', 'documents', userId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['candidate', 'documents', userId] })
+      qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
+    },
   })
 
   const remove = useMutation({
     mutationFn: (id: string) => removeCandidateDocument(userId, id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['candidate', 'documents', userId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['candidate', 'documents', userId] })
+      qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
+    },
   })
 
   return (

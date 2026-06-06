@@ -7,6 +7,7 @@ import { StatusBadge } from '@/features/shared/components/ui/StatusBadge'
 import { VerificationTimeline } from '@/features/verification/components/VerificationTimeline'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
+import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import {
   fetchMyCandidateProfile,
   fetchMyDocuments,
@@ -33,6 +34,7 @@ export function VerificationStatusPage() {
     mutationFn: () => submitCandidateForVerification(userId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['candidate', 'profile', userId] })
+      qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
     },
   })
 

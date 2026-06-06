@@ -10,6 +10,7 @@ import { Input } from '@/features/shared/components/ui/Input'
 import { useAuthStore } from '@/stores/auth-store'
 import { createHrJob } from '../actions'
 import { jobSchema, type JobForm } from '../schemas/job.schema'
+import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 
 function parseRequirements(value?: string): string[] {
   return (value ?? '')
@@ -48,6 +49,7 @@ export function CreateJobPage() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['jobs', 'hr', userId] })
+      qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
       navigate('/hr/jobs')
     },
   })

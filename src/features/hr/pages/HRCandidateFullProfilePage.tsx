@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   BadgeCheck,
@@ -17,6 +17,7 @@ import { Badge } from '@/features/shared/components/ui/Badge'
 import { Skeleton } from '@/features/shared/components/ui/Skeleton'
 import { EmptyState } from '@/features/shared/components/layout/EmptyState'
 import { useAuthStore } from '@/stores/auth-store'
+import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import {
   fetchCandidateFullProfile,
   fetchHrMembership,
@@ -27,6 +28,7 @@ import {
 export function HRCandidateFullProfilePage() {
   const { id } = useParams<{ id: string }>()
   const hrUserId = useAuthStore((s) => s.profile!.id)
+  const qc = useQueryClient()
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
   const [contactError, setContactError] = useState<string | null>(null)
@@ -57,6 +59,7 @@ export function HRCandidateFullProfilePage() {
     onSuccess: () => {
       setSent(true)
       setContactError(null)
+      qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
     },
     onError: (e) =>
       setContactError(e instanceof Error ? e.message : 'Failed to send request'),

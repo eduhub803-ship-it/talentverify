@@ -11,6 +11,7 @@ import { Card, CardBody } from '@/features/shared/components/ui/Card'
 import { Skeleton } from '@/features/shared/components/ui/Skeleton'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
+import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import type { CandidateJobApplicationContext, Job } from '@/types/domain'
 import { fetchOpenJobs } from '../actions'
 
@@ -126,6 +127,7 @@ export function CandidateJobsPage() {
           qc.invalidateQueries({
             queryKey: ['applications', 'candidate-context', candidateId],
           })
+          qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
         }}
       />
     </div>
