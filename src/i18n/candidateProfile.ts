@@ -1,0 +1,36 @@
+export const candidateProfileTranslations = {
+  en: {
+    'candidateProfile.add': 'Add',
+    'candidateProfile.addSkill': 'Add a skill',
+    'candidateProfile.bio': 'Bio',
+    'candidateProfile.bioPlaceholder': 'Brief professional summary...',
+    'candidateProfile.description':
+      'Only you and verified reviewers can see your full profile details.',
+    'candidateProfile.email': 'Email',
+    'candidateProfile.headline': 'Headline',
+    'candidateProfile.headlinePlaceholder': 'e.g. Senior Software Engineer',
+    'candidateProfile.location': 'Location',
+    'candidateProfile.locationPlaceholder': 'e.g. San Francisco, CA',
+    'candidateProfile.saveChanges': 'Save changes',
+    'candidateProfile.saved': 'Profile saved successfully.',
+    'candidateProfile.skills': 'Skills',
+    'candidateProfile.title': 'Your profile',
+  },
+  ar: {
+    'candidateProfile.add': 'إضافة',
+    'candidateProfile.addSkill': 'أضف مهارة',
+    'candidateProfile.bio': 'نبذة',
+    'candidateProfile.bioPlaceholder': 'ملخص مهني قصير...',
+    'candidateProfile.description':
+      'يمكنك أنت والمراجعون المعتمدون فقط رؤية تفاصيل ملفك كاملة.',
+    'candidateProfile.email': 'البريد الإلكتروني',
+    'candidateProfile.headline': 'العنوان المهني',
+    'candidateProfile.headlinePlaceholder': 'مثال: مهندس برمجيات أول',
+    'candidateProfile.location': 'الموقع',
+    'candidateProfile.locationPlaceholder': 'مثال: عمّان، الأردن',
+    'candidateProfile.saveChanges': 'حفظ التغييرات',
+    'candidateProfile.saved': 'تم حفظ الملف الشخصي بنجاح.',
+    'candidateProfile.skills': 'المهارات',
+    'candidateProfile.title': 'ملفك الشخصي',
+  },
+} as const
