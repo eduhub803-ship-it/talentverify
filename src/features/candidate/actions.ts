@@ -12,6 +12,8 @@ import {
   type TalentDocument,
   type UsageLimit,
 } from '@/types/domain'
+import { calculatePassportCompletion } from './passport'
+import { validateCvFile } from './cv-workflow'
 
 export async function fetchMyCandidateProfile(userId: string): Promise<CandidateProfile> {
   return candidateService.getMyProfile(userId)
@@ -19,12 +21,25 @@ export async function fetchMyCandidateProfile(userId: string): Promise<Candidate
 
 export async function saveCandidateProfile(
   userId: string,
-  data: {
-    headline: string | null
-    location: string | null
-    bio: string | null
-    skills: string[]
-  },
+  data: Partial<
+    Pick<
+      CandidateProfile,
+      | 'headline'
+      | 'location'
+      | 'bio'
+      | 'skills'
+      | 'structuredSkills'
+      | 'education'
+      | 'experience'
+      | 'languages'
+      | 'projects'
+      | 'sehTraining'
+      | 'credentials'
+      | 'careerPreferences'
+      | 'linkedinUrl'
+      | 'employerVisible'
+    >
+  >,
 ): Promise<CandidateProfile> {
   const updated = await candidateService.updateProfile(userId, data)
   await candidatesService.syncFromProfile(userId)
@@ -40,7 +55,23 @@ export async function uploadCandidateDocument(
   file: File,
   type: DocumentType,
 ): Promise<TalentDocument> {
+  if (type === 'cv') {
+    const validation = validateCvFile(file)
+    if (!validation.ok) throw new Error(validation.message ?? 'Invalid CV file.')
+  }
   const doc = await candidateService.uploadDocument(userId, file, type)
+  await candidatesService.syncFromProfile(userId)
+  return doc
+}
+
+export async function replaceCandidateCvDocument(
+  userId: string,
+  currentDocumentId: string,
+  file: File,
+): Promise<TalentDocument> {
+  const validation = validateCvFile(file)
+  if (!validation.ok) throw new Error(validation.message ?? 'Invalid CV file.')
+  const doc = await candidateService.replaceCvDocument(userId, currentDocumentId, file)
   await candidatesService.syncFromProfile(userId)
   return doc
 }
@@ -54,6 +85,14 @@ export async function removeCandidateDocument(
 }
 
 export async function submitCandidateForVerification(userId: string): Promise<void> {
+  const [profile, documents] = await Promise.all([
+    candidateService.getMyProfile(userId),
+    candidateService.getDocuments(userId),
+  ])
+  const completion = calculatePassportCompletion(profile, documents)
+  if (!completion.canSubmitForVerification) {
+    throw new Error(`Complete these Talent Passport items first: ${completion.missingRequired.join(', ')}.`)
+  }
   return candidateService.submitForVerification(userId)
 }
 

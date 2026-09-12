@@ -8,6 +8,11 @@ export const candidateJobsTranslations = {
       'Open roles from HR organizations will appear here.',
     'candidateJobs.emptyTitle': 'No open jobs',
     'candidateJobs.title': 'Jobs',
+    'candidateJobs.applicationStatus': 'Your application',
+    'candidateJobs.appliedOn': 'Applied on',
+    'candidateJobs.status.pending': 'Under review',
+    'candidateJobs.status.accepted': 'Accepted',
+    'candidateJobs.status.rejected': 'Not selected',
   },
   ar: {
     'candidateJobs.applied': 'تم التقديم',
@@ -18,5 +23,10 @@ export const candidateJobsTranslations = {
       'ستظهر هنا الوظائف المفتوحة من مؤسسات الموارد البشرية.',
     'candidateJobs.emptyTitle': 'لا توجد وظائف مفتوحة',
     'candidateJobs.title': 'الوظائف',
+    'candidateJobs.applicationStatus': 'طلبك',
+    'candidateJobs.appliedOn': 'تاريخ التقديم',
+    'candidateJobs.status.pending': 'قيد المراجعة',
+    'candidateJobs.status.accepted': 'تم القبول',
+    'candidateJobs.status.rejected': 'لم يتم الاختيار',
   },
 } as const

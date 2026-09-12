@@ -40,7 +40,7 @@ export async function fetchCandidateFullProfile(
   if (!record) {
     throw new Error('Candidate not found.')
   }
-  const verified = hrService.getVerifiedCandidate(candidateId)
+  const verified = await hrService.getVerifiedCandidate(candidateId)
   if (!verified) {
     throw new AuthorizationError('This candidate is not verified.')
   }
@@ -55,6 +55,22 @@ export async function sendHrContactRequest(input: {
 }): Promise<ContactRequest> {
   await assertHrOrgApproved(input.hrUserId)
   return hrService.sendContactRequest(input)
+}
+
+export async function fetchShortlistedCandidateIds(hrUserId: string): Promise<string[]> {
+  const membership = await assertHrOrgApproved(hrUserId)
+  return hrService.listShortlistedCandidateIds(hrUserId, membership.organizationId)
+}
+
+export async function toggleCandidateShortlist(input: {
+  hrUserId: string
+  candidateId: string
+}): Promise<{ shortlisted: boolean }> {
+  const membership = await assertHrOrgApproved(input.hrUserId)
+  return hrService.toggleShortlist({
+    ...input,
+    organizationId: membership.organizationId,
+  })
 }
 
 export function getCvDownloadUrl(record: CandidateRecord): string | null {

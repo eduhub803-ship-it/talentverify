@@ -1,8 +1,9 @@
-import { useContext, useState, type ReactNode } from 'react'
+import { useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bell, ChevronDown, CircleUser, Globe, LogOut, Menu } from 'lucide-react'
+import { Bell, ChevronDown, Globe, LogOut, Menu } from 'lucide-react'
 import { Sidebar, type NavItem } from './Sidebar'
+import { Avatar } from '../ui/Avatar'
 import { Button } from '../ui/Button'
 import { useAuthStore } from '@/stores/auth-store'
 import { logoutUser } from '@/features/auth/actions'
@@ -14,6 +15,31 @@ import {
 } from '@/features/notifications/actions'
 import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import { formatDate } from '@/lib/utils'
+
+/** Closes a header popover on outside click or Escape. */
+function useDismissable(open: boolean, onClose: () => void) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!ref.current?.contains(event.target as Node)) onClose()
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open, onClose])
+
+  return ref
+}
 
 function NotificationBell() {
   const [open, setOpen] = useState(false)
@@ -45,11 +71,12 @@ function NotificationBell() {
   })
 
   const unreadCount = notifications.filter((notification) => !notification.isRead).length
+  const containerRef = useDismissable(open, () => setOpen(false))
 
   if (!profile) return null
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <Button
         type="button"
         variant="ghost"
@@ -152,6 +179,7 @@ export function AppShell({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useDismissable(userMenuOpen, () => setUserMenuOpen(false))
   const profile = useAuthStore((s) => s.profile)
   const navigate = useNavigate()
   const language = useContext(LanguageContext)
@@ -192,7 +220,7 @@ export function AppShell({
           <div className="flex items-center gap-3">
             <NotificationBell />
             <LanguageToggle />
-            <div className="relative">
+            <div className="relative" ref={userMenuRef}>
               <Button
                 type="button"
                 variant="ghost"
@@ -200,7 +228,12 @@ export function AppShell({
                 className="gap-2 px-2 sm:px-3"
                 onClick={() => setUserMenuOpen((value) => !value)}
               >
-                <CircleUser className="h-5 w-5" />
+                <Avatar
+                  src={profile?.avatarUrl}
+                  name={profile?.fullName}
+                  email={profile?.email}
+                  size="sm"
+                />
                 <span className="hidden max-w-40 truncate text-sm font-medium sm:inline">
                   {userName}
                 </span>
@@ -209,11 +242,19 @@ export function AppShell({
 
               {userMenuOpen && (
                 <div className="absolute end-0 z-50 mt-2 w-64 overflow-hidden rounded-xl border border-border bg-white text-start shadow-lg">
-                  <div className="border-b border-border px-4 py-3">
+                  <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+                    <Avatar
+                      src={profile?.avatarUrl}
+                      name={profile?.fullName}
+                      email={profile?.email}
+                      size="md"
+                    />
+                    <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-foreground">{userName}</p>
                     {roleLabel && (
                       <p className="mt-1 text-xs capitalize text-muted">{roleLabel}</p>
                     )}
+                    </div>
                   </div>
                   <div className="p-2">
                     <button

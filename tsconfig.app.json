@@ -22,5 +22,20 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  /*
+   * Legacy Next.js/Radix scaffolding that is not part of the TalentVerify Vite
+   * application. Verified disconnected in both directions: no active-app module
+   * imports it, and it imports no active-app module. `src/app/router.tsx` and
+   * `src/app/App.tsx` ARE active and stay typechecked.
+   */
+  "exclude": [
+    "src/app/(public)",
+    "src/app/api",
+    "src/app/layout.tsx",
+    "src/components",
+    "src/infrastructure",
+    "src/modules",
+    "src/shared"
+  ]
 }

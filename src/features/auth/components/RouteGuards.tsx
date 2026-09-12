@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth-store'
 import type { UserRole } from '@/types/domain'
+import { isPlatformAdminRole } from '../roles'
 
 function LoadingScreen() {
   return (
@@ -36,6 +37,9 @@ export function ProtectedRoute({ role }: { role?: UserRole }) {
   if (!isHydrated) return <LoadingScreen />
   if (!profile) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />
+  }
+  if (role === 'admin' && isPlatformAdminRole(profile.role)) {
+    return <Outlet />
   }
   if (role && profile.role !== role) {
     return <Navigate to="/" replace />

@@ -10,6 +10,9 @@ export const adminQueryKeys = {
   activity: ['admin', 'activity'] as const,
   candidates: ['admin', 'candidates'] as const,
   organizations: ['admin', 'organizations'] as const,
+  candidateDirectory: ['admin', 'candidate-directory'] as const,
+  importedCandidates: ['admin', 'imported-candidates'] as const,
+  importBatches: ['admin', 'import-batches'] as const,
 }
 
 export function invalidateAdminWorkspace(qc: QueryClient) {
@@ -23,5 +26,8 @@ export function invalidateAdminWorkspace(qc: QueryClient) {
     qc.invalidateQueries({ queryKey: adminQueryKeys.activity }),
     qc.invalidateQueries({ queryKey: adminQueryKeys.candidates }),
     qc.invalidateQueries({ queryKey: adminQueryKeys.organizations }),
+    qc.invalidateQueries({ queryKey: adminQueryKeys.candidateDirectory }),
+    qc.invalidateQueries({ queryKey: adminQueryKeys.importedCandidates }),
+    qc.invalidateQueries({ queryKey: adminQueryKeys.importBatches }),
   ])
 }

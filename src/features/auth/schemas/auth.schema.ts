@@ -5,6 +5,14 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 })
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Enter a valid email'),
+})
+
+export const resetPasswordSchema = z.object({
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+})
+
 export const registerSchema = z
   .object({
     fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -19,4 +27,6 @@ export const registerSchema = z
   })
 
 export type LoginForm = z.infer<typeof loginSchema>
+export type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>
+export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>
 export type RegisterForm = z.infer<typeof registerSchema>

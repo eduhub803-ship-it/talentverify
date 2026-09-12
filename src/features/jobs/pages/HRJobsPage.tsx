@@ -16,6 +16,12 @@ function preview(text: string): string {
   return text.length > 150 ? `${text.slice(0, 150)}...` : text
 }
 
+function statusVariant(status: string) {
+  if (status === 'open') return 'success'
+  if (status === 'draft') return 'warning'
+  return 'danger'
+}
+
 export function HRJobsPage() {
   const userId = useAuthStore((s) => s.profile!.id)
   const language = useContext(LanguageContext)
@@ -87,9 +93,7 @@ export function HRJobsPage() {
                       <h2 className="font-semibold text-foreground">{job.title}</h2>
                       <p className="mt-2 text-sm text-muted">{preview(job.description)}</p>
                     </div>
-                    <Badge variant={job.status === 'open' ? 'success' : 'danger'}>
-                      {job.status}
-                    </Badge>
+                    <Badge variant={statusVariant(job.status)}>{job.status}</Badge>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted">
                     <span className="inline-flex items-center gap-1">

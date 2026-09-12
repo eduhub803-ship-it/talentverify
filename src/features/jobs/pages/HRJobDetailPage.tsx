@@ -7,6 +7,7 @@ import {
   Check,
   Download,
   MapPin,
+  Send,
   User,
   X,
 } from 'lucide-react'
@@ -19,16 +20,23 @@ import { Skeleton } from '@/features/shared/components/ui/Skeleton'
 import { formatDate } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
-import type { ApplicationStatus } from '@/types/domain'
+import type { ApplicationStatus, Job } from '@/types/domain'
 import { fetchJobApplications, updateJobApplicationStatus } from '@/features/applications/actions'
 import { invalidateAdminWorkspace } from '@/features/admin/queryKeys'
 import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
-import { fetchHrJob } from '../actions'
+import { JobMatchPanel } from '@/features/employer/components/JobMatchPanel'
+import { fetchHrJob, updateHrJobStatus } from '../actions'
 
 function applicationVariant(status: ApplicationStatus) {
   if (status === 'accepted') return 'success'
   if (status === 'rejected') return 'danger'
   return 'warning'
+}
+
+function jobVariant(status: string) {
+  if (status === 'open') return 'success'
+  if (status === 'draft') return 'warning'
+  return 'danger'
 }
 
 export function HRJobDetailPage() {
@@ -72,6 +80,21 @@ export function HRJobDetailPage() {
       qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
     },
   })
+
+  const updateJob = useMutation({
+    mutationFn: (status: Job['status']) => updateHrJobStatus(userId, job!.id, status),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['jobs', 'hr', userId] })
+      qc.invalidateQueries({ queryKey: ['jobs', 'hr', userId, id] })
+      qc.invalidateQueries({ queryKey: ['jobs', 'open'] })
+    },
+  })
+
+  const changeJobStatus = (status: Job['status']) => {
+    if (updateJob.isPending) return
+    if (status === 'closed' && !window.confirm(t('hrJobDetail.closeConfirm'))) return
+    updateJob.mutate(status)
+  }
 
   if (jobLoading) {
     return (
@@ -119,9 +142,39 @@ export function HRJobDetailPage() {
         title={job.title}
         description={`${job.jobType} ${t('hrJobDetail.in')} ${job.location}`}
         actions={
-          <Badge variant={job.status === 'open' ? 'success' : 'danger'}>
-            {job.status}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={jobVariant(job.status)}>{job.status}</Badge>
+            {job.status === 'draft' && (
+              <Button
+                size="sm"
+                isLoading={updateJob.isPending}
+                onClick={() => changeJobStatus('open')}
+              >
+                <Send className="h-4 w-4" />
+                {t('hrJobDetail.publish')}
+              </Button>
+            )}
+            {job.status === 'open' && (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={updateJob.isPending}
+                onClick={() => changeJobStatus('closed')}
+              >
+                {t('hrJobDetail.closeJob')}
+              </Button>
+            )}
+            {job.status === 'closed' && (
+              <Button
+                size="sm"
+                variant="secondary"
+                isLoading={updateJob.isPending}
+                onClick={() => changeJobStatus('open')}
+              >
+                {t('hrJobDetail.reopen')}
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -170,6 +223,8 @@ export function HRJobDetailPage() {
               </dl>
             </CardBody>
           </Card>
+
+          <JobMatchPanel jobId={job.id} />
         </div>
 
         <div>

@@ -5,6 +5,9 @@ import { candidateDashboardTranslations } from "./candidateDashboard"
 import { candidateProfileTranslations } from "./candidateProfile"
 import { candidateJobsTranslations } from "./candidateJobs"
 import { uploadCvTranslations } from "./uploadCv"
+import { adminImportTranslations } from "./adminImport"
+import { careerServicesTranslations } from "./careerServices"
+import { employerTranslations } from "./employer"
 
 export const translations = {
   en: {
@@ -14,6 +17,9 @@ export const translations = {
     ...candidateProfileTranslations.en,
     ...candidateJobsTranslations.en,
     ...uploadCvTranslations.en,
+    ...adminImportTranslations.en,
+    ...careerServicesTranslations.en,
+    ...employerTranslations.en,
   },
   ar: {
     ...ar,
@@ -22,5 +28,8 @@ export const translations = {
     ...candidateProfileTranslations.ar,
     ...candidateJobsTranslations.ar,
     ...uploadCvTranslations.ar,
+    ...adminImportTranslations.ar,
+    ...careerServicesTranslations.ar,
+    ...employerTranslations.ar,
   },
 }

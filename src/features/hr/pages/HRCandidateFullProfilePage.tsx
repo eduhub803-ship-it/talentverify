@@ -9,9 +9,11 @@ import {
   Mail,
   MapPin,
   Sparkles,
+  Star,
 } from 'lucide-react'
 import { PageHeader } from '@/features/shared/components/layout/PageHeader'
 import { Card, CardBody } from '@/features/shared/components/ui/Card'
+import { Avatar } from '@/features/shared/components/ui/Avatar'
 import { Button } from '@/features/shared/components/ui/Button'
 import { Badge } from '@/features/shared/components/ui/Badge'
 import { Skeleton } from '@/features/shared/components/ui/Skeleton'
@@ -21,8 +23,10 @@ import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import {
   fetchCandidateFullProfile,
   fetchHrMembership,
+  fetchShortlistedCandidateIds,
   getCvDownloadUrl,
   sendHrContactRequest,
+  toggleCandidateShortlist,
 } from '../actions'
 
 export function HRCandidateFullProfilePage() {
@@ -36,6 +40,12 @@ export function HRCandidateFullProfilePage() {
   const { data: membership } = useQuery({
     queryKey: ['hr', 'membership', hrUserId],
     queryFn: () => fetchHrMembership(hrUserId),
+  })
+
+  const { data: shortlistedIds = [] } = useQuery({
+    queryKey: ['hr', 'shortlists', hrUserId],
+    queryFn: () => fetchShortlistedCandidateIds(hrUserId),
+    enabled: membership?.organization?.status === 'approved',
   })
 
   const {
@@ -65,7 +75,15 @@ export function HRCandidateFullProfilePage() {
       setContactError(e instanceof Error ? e.message : 'Failed to send request'),
   })
 
+  const shortlist = useMutation({
+    mutationFn: () => toggleCandidateShortlist({ hrUserId, candidateId: id! }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['hr', 'shortlists', hrUserId] })
+    },
+  })
+
   const cvUrl = candidate ? getCvDownloadUrl(candidate) : null
+  const isShortlisted = Boolean(id && shortlistedIds.includes(id))
 
   const handleDownload = () => {
     if (!cvUrl) return
@@ -118,14 +136,38 @@ export function HRCandidateFullProfilePage() {
         Back to search
       </Link>
 
+      <div className="mb-4 flex items-center gap-3">
+        <Avatar
+          src={candidate.avatarUrl}
+          name={candidate.name}
+          email={candidate.email}
+          size="lg"
+        />
+        <div className="min-w-0">
+          <p className="text-sm text-muted">{candidate.sehTalentId ?? ''}</p>
+        </div>
+      </div>
+
       <PageHeader
         title={candidate.name}
         description={candidate.location ?? undefined}
         actions={
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-success">
-            <BadgeCheck className="h-4 w-4" />
-            Verified
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-success">
+              <BadgeCheck className="h-4 w-4" />
+              Verified
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant={isShortlisted ? 'primary' : 'secondary'}
+              isLoading={shortlist.isPending}
+              onClick={() => shortlist.mutate()}
+            >
+              <Star className="h-4 w-4" />
+              {isShortlisted ? 'Shortlisted' : 'Shortlist'}
+            </Button>
+          </div>
         }
       />
 

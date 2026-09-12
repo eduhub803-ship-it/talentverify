@@ -16,6 +16,12 @@ export interface RegisterInput {
   organizationName?: string
 }
 
+export interface RegisterResult {
+  profile: Profile | null
+  email: string
+  needsEmailConfirmation: boolean
+}
+
 function mapProfile(row: {
   id: string
   role: UserRole
@@ -75,21 +81,22 @@ export const authService = {
     return profile
   },
 
-  async register(input: RegisterInput): Promise<Profile> {
-    if (input.role === 'admin') {
+  async register(input: RegisterInput): Promise<RegisterResult> {
+    if (input.role === 'admin' || input.role === 'super_admin') {
       throw new Error('Admin accounts cannot be self-registered.')
     }
 
     if (!isSupabaseConfigured || !supabase) {
       const profile = mockDb.register(input)
       useAuthStore.getState().setProfile(profile)
-      return profile
+      return { profile, email: input.email, needsEmailConfirmation: false }
     }
 
     const { data, error } = await supabase.auth.signUp({
       email: input.email,
       password: input.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/login?verified=1`,
         data: {
           full_name: input.fullName,
           role: input.role,
@@ -100,9 +107,13 @@ export const authService = {
     if (error) throw new Error(error.message)
     if (!data.user) throw new Error('Registration failed.')
 
+    if (!data.session) {
+      return { profile: null, email: input.email, needsEmailConfirmation: true }
+    }
+
     const profile = await this.getSessionProfile()
     if (!profile) {
-      return {
+      const fallbackProfile = {
         id: data.user.id,
         role: input.role,
         email: input.email,
@@ -110,9 +121,40 @@ export const authService = {
         avatarUrl: null,
         createdAt: new Date().toISOString(),
       }
+      useAuthStore.getState().setProfile(fallbackProfile)
+      return { profile: fallbackProfile, email: input.email, needsEmailConfirmation: false }
     }
     useAuthStore.getState().setProfile(profile)
-    return profile
+    return { profile, email: input.email, needsEmailConfirmation: false }
+  },
+
+  async resendSignupConfirmation(email: string): Promise<void> {
+    if (!isSupabaseConfigured || !supabase) return
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login?verified=1`,
+      },
+    })
+    if (error) throw new Error(error.message)
+  },
+
+  async sendPasswordReset(email: string): Promise<void> {
+    if (!isSupabaseConfigured || !supabase) return
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) throw new Error(error.message)
+  },
+
+  async updatePassword(password: string): Promise<void> {
+    if (!isSupabaseConfigured || !supabase) return
+
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw new Error(error.message)
   },
 
   async logout(): Promise<void> {
@@ -131,6 +173,7 @@ export const authService = {
       case 'hr':
         return '/hr'
       case 'admin':
+      case 'super_admin':
         return '/admin'
       default:
         return '/'

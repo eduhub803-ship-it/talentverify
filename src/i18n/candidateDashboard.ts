@@ -12,6 +12,19 @@ export const candidateDashboardTranslations = {
     'candidateDashboard.viewDetails': 'View details',
     'candidateDashboard.welcome': 'Welcome',
     'candidateDashboard.yes': 'Yes',
+    'candidateDashboard.missingItems': 'Still missing',
+    'candidateDashboard.employerVisibility': 'Employer visibility',
+    'candidateDashboard.discoverable': 'Discoverable',
+    'candidateDashboard.notDiscoverable': 'Not discoverable',
+    'candidateDashboard.discoverableHint':
+      'Approved employers can find your verified profile.',
+    'candidateDashboard.visibilityOffHint':
+      'Turn on employer visibility in your profile to be discoverable once verified.',
+    'candidateDashboard.notVerifiedHint':
+      'Visibility is on. You become discoverable once your profile is verified.',
+    'candidateDashboard.manageVisibility': 'Manage',
+    'candidateDashboard.applications': 'Job applications',
+    'candidateDashboard.underReview': 'under review',
     'Add certificates & experience': 'Add certificates & experience',
     'Complete your profile': 'Complete your profile',
     'Evaluate CV with AI': 'Evaluate CV with AI',
@@ -31,6 +44,19 @@ export const candidateDashboardTranslations = {
     'candidateDashboard.viewDetails': 'عرض التفاصيل',
     'candidateDashboard.welcome': 'مرحباً',
     'candidateDashboard.yes': 'نعم',
+    'candidateDashboard.missingItems': 'ما زال ناقصاً',
+    'candidateDashboard.employerVisibility': 'الظهور لأصحاب العمل',
+    'candidateDashboard.discoverable': 'ظاهر',
+    'candidateDashboard.notDiscoverable': 'غير ظاهر',
+    'candidateDashboard.discoverableHint':
+      'يمكن لأصحاب العمل المعتمدين العثور على ملفك الموثق.',
+    'candidateDashboard.visibilityOffHint':
+      'فعّل الظهور لأصحاب العمل من ملفك الشخصي لتصبح ظاهراً بعد التوثيق.',
+    'candidateDashboard.notVerifiedHint':
+      'الظهور مفعّل. ستصبح ظاهراً بمجرد توثيق ملفك.',
+    'candidateDashboard.manageVisibility': 'إدارة',
+    'candidateDashboard.applications': 'طلبات التوظيف',
+    'candidateDashboard.underReview': 'قيد المراجعة',
     'Add certificates & experience': 'أضف الشهادات والخبرات',
     'Complete your profile': 'أكمل ملفك الشخصي',
     'Evaluate CV with AI': 'قيّم السيرة الذاتية بالذكاء الاصطناعي',

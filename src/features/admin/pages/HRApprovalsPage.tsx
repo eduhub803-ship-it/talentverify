@@ -1,6 +1,7 @@
 import { useContext, useMemo, useState, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  AlertTriangle,
   Building2,
   CheckCircle2,
   ExternalLink,
@@ -90,6 +91,8 @@ export function HRApprovalsPage() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [reviewNotes, setReviewNotes] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [reviewed, setReviewed] = useState<string | null>(null)
 
   const { data: orgs = [], refetch } = useQuery({
     queryKey: adminQueryKeys.hrPending,
@@ -107,10 +110,12 @@ export function HRApprovalsPage() {
     mutationFn: async ({ orgId, approved }: ReviewPayload) => {
       return reviewHrOrganization(orgId, approved)
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       void invalidateAdminWorkspace(qc)
       qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
       setReviewNotes('')
+      setFormError(null)
+      setReviewed(variables.approved ? 'approved' : 'rejected')
       setSelectedId(null)
       refetch()
     },
@@ -120,9 +125,10 @@ export function HRApprovalsPage() {
     if (!selectedOrg || review.isPending) return
 
     if (!approved && !reviewNotes.trim()) {
-      window.alert('يرجى كتابة سبب الرفض قبل رفض اعتماد المؤسسة.')
+      setFormError('يرجى كتابة سبب الرفض قبل رفض اعتماد المؤسسة.')
       return
     }
+    setFormError(null)
 
     const message = approved
       ? `هل أنت متأكد من اعتماد مؤسسة ${selectedOrg.name}؟`
@@ -364,6 +370,18 @@ export function HRApprovalsPage() {
                     onChange={(event) => setReviewNotes(event.target.value)}
                   />
 
+                  {(formError || review.isError) && (
+                    <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>
+                        {formError ??
+                          (review.error instanceof Error
+                            ? review.error.message
+                            : 'تعذر حفظ قرار الاعتماد.')}
+                      </span>
+                    </div>
+                  )}
+
                   <div>
                     <p className="mb-2 text-sm font-medium text-foreground">
                       إجراء الموافقة / الرفض
@@ -397,6 +415,11 @@ export function HRApprovalsPage() {
                 </>
               ) : (
                 <p className="text-sm text-muted">
+                  {reviewed === 'approved'
+                    ? 'تم اعتماد المؤسسة وتحديث القائمة. '
+                    : reviewed === 'rejected'
+                      ? 'تم رفض الطلب وتحديث القائمة. '
+                      : ''}
                   اختر مؤسسة من القائمة لعرض تفاصيل طلب الاعتماد.
                 </p>
               )}

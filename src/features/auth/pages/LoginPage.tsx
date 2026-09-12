@@ -4,14 +4,30 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthLayout } from '../components/AuthLayout'
 import { loginSchema, type LoginForm } from '../schemas/auth.schema'
-import { getDashboardPath, loginUser } from '../actions'
+import { getDashboardPath, loginUser, resendSignupConfirmation } from '../actions'
 import { Input } from '@/features/shared/components/ui/Input'
 import { Button } from '@/features/shared/components/ui/Button'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [error, setError] = useState<string | null>(null)
+  const params = new URLSearchParams(location.search)
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const authError =
+    params.get('error_description') ??
+    hashParams.get('error_description') ??
+    params.get('error') ??
+    hashParams.get('error')
+  const [error, setError] = useState<string | null>(
+    authError ? decodeURIComponent(authError).replace(/\+/g, ' ') : null,
+  )
+  const [notice, setNotice] = useState<string | null>(
+    !authError && params.get('verified') === '1'
+      ? 'Email confirmed. Sign in with your email and password.'
+      : null,
+  )
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
+  const [isResending, setIsResending] = useState(false)
 
   const {
     register,
@@ -21,12 +37,32 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     setError(null)
+    setNotice(null)
+    setUnconfirmedEmail(null)
     try {
       const profile = await loginUser(data)
       const from = (location.state as { from?: string })?.from
       navigate(from ?? getDashboardPath(profile.role), { replace: true })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Login failed')
+      const message = e instanceof Error ? e.message : 'Login failed'
+      setError(message)
+      if (message.toLowerCase().includes('email not confirmed')) {
+        setUnconfirmedEmail(data.email)
+      }
+    }
+  }
+
+  const onResendConfirmation = async () => {
+    if (!unconfirmedEmail) return
+    setIsResending(true)
+    setNotice(null)
+    try {
+      await resendSignupConfirmation(unconfirmedEmail)
+      setNotice('Verification email sent. Check your inbox for the latest link.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Verification email could not be sent.')
+    } finally {
+      setIsResending(false)
     }
   }
 
@@ -50,24 +86,37 @@ export function LoginPage() {
         {error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
         )}
+        {notice && (
+          <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            {notice}
+          </p>
+        )}
+        {unconfirmedEmail && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            isLoading={isResending}
+            onClick={onResendConfirmation}
+          >
+            Resend verification email
+          </Button>
+        )}
         <Button type="submit" className="w-full" isLoading={isSubmitting}>
           Sign in
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted">
+      <p className="mt-4 text-center text-sm">
+        <Link to="/forgot-password" className="font-medium text-primary hover:underline">
+          Forgot password?
+        </Link>
+      </p>
+      <p className="mt-4 text-center text-sm text-muted">
         Don&apos;t have an account?{' '}
         <Link to="/register" className="font-medium text-primary hover:underline">
           Register
         </Link>
       </p>
-      <div className="mt-8 rounded-lg border border-border bg-slate-50 p-4 text-xs text-muted">
-        <p className="font-medium text-foreground">Demo accounts</p>
-        <ul className="mt-2 space-y-1">
-          <li>Candidate: candidate@demo.com / demo12345</li>
-          <li>HR: hr@demo.com / demo12345</li>
-          <li>Admin: admin@talentverify.com / admin12345</li>
-        </ul>
-      </div>
     </AuthLayout>
   )
 }

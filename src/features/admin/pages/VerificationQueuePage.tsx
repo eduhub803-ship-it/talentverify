@@ -4,50 +4,29 @@ import { formatDate } from '@/lib/utils'
 import { PageHeader } from '@/features/shared/components/layout/PageHeader'
 import { Card, CardBody } from '@/features/shared/components/ui/Card'
 import { Button } from '@/features/shared/components/ui/Button'
+import { Avatar } from '@/features/shared/components/ui/Avatar'
 import { Badge } from '@/features/shared/components/ui/Badge'
 import { StatusBadge } from '@/features/shared/components/ui/StatusBadge'
 import { EmptyState } from '@/features/shared/components/layout/EmptyState'
-import { ClipboardList, ExternalLink } from 'lucide-react'
+import { AlertTriangle, Check, ClipboardList, ExternalLink } from 'lucide-react'
 import { LanguageContext } from '@/context/LanguageContext'
 import { fetchVerificationQueue, reviewCandidateSubmission } from '../actions'
 import { adminQueryKeys, invalidateAdminWorkspace } from '../queryKeys'
 import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import type { VerificationQueueItem } from '@/types/domain'
 
-type QueueItemExtra = VerificationQueueItem & Record<string, unknown>
-
-function getText(item: QueueItemExtra, keys: string[]) {
-  for (const key of keys) {
-    const value = item[key]
-    if (typeof value === 'string' && value.trim()) return value
-    if (typeof value === 'number') return String(value)
-  }
-  return ''
-}
-
-function getLinks(item: QueueItemExtra) {
-  const keys = [
-    'resumeUrl',
-    'cvUrl',
-    'profileUrl',
-    'portfolioUrl',
-    'linkedinUrl',
-    'documentUrl',
-    'attachmentUrl',
-  ]
-
-  return keys
-    .map((key) => ({ label: key, url: item[key] }))
-    .filter(
-      (link): link is { label: string; url: string } =>
-        typeof link.url === 'string' && link.url.trim().length > 0,
-    )
+/** Only the LinkedIn profile is stored for a candidate under review. */
+function getLinks(item: VerificationQueueItem) {
+  return item.linkedinUrl
+    ? [{ label: 'LinkedIn', url: item.linkedinUrl }]
+    : []
 }
 
 export function VerificationQueuePage() {
   const qc = useQueryClient()
   const [selected, setSelected] = useState<VerificationQueueItem | null>(null)
   const [notes, setNotes] = useState('')
+  const [reviewed, setReviewed] = useState<string | null>(null)
   const language = useContext(LanguageContext)
   const t = language?.t ?? ((key: string) => key)
 
@@ -66,17 +45,17 @@ export function VerificationQueuePage() {
     }) => {
       return reviewCandidateSubmission(userId, approved, notes || undefined)
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       void invalidateAdminWorkspace(qc)
       qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
+      setReviewed(variables.approved ? 'approved' : 'rejected')
       setSelected(null)
       setNotes('')
       refetch()
     },
   })
 
-  const selectedExtra = selected as QueueItemExtra | null
-  const links = selectedExtra ? getLinks(selectedExtra) : []
+  const links = selected ? getLinks(selected) : []
 
   return (
     <div>
@@ -135,7 +114,10 @@ export function VerificationQueuePage() {
                             ? 'cursor-pointer bg-primary-50/70'
                             : 'cursor-pointer hover:bg-slate-50'
                         }
-                        onClick={() => setSelected(item)}
+                        onClick={() => {
+                          setReviewed(null)
+                          setSelected(item)
+                        }}
                       >
                         <td className="px-4 py-3">
                           <p className="font-semibold text-foreground">
@@ -182,13 +164,31 @@ export function VerificationQueuePage() {
               {selected ? 'ملف المرشح' : 'قرار المراجعة'}
             </h2>
 
-            {!selected || !selectedExtra ? (
-              <p className="text-sm text-muted">
-                اختر مرشحًا من القائمة لعرض تفاصيله.
-              </p>
+            {!selected ? (
+              <div className="space-y-3">
+                {reviewed && (
+                  <p className="inline-flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-success">
+                    <Check className="h-4 w-4" />
+                    {reviewed === 'approved'
+                      ? 'تم اعتماد المرشح وتحديث القائمة.'
+                      : 'تم رفض الطلب وتحديث القائمة.'}
+                  </p>
+                )}
+                <p className="text-sm text-muted">
+                  اختر مرشحًا من القائمة لعرض تفاصيله.
+                </p>
+              </div>
             ) : (
               <>
                 <div className="rounded-xl border border-border bg-slate-50 p-4 text-center">
+                  <div className="mb-3 flex justify-center">
+                    <Avatar
+                      src={selected.avatarUrl}
+                      name={selected.fullName}
+                      email={selected.email}
+                      size="lg"
+                    />
+                  </div>
                   <p className="text-xs font-medium text-muted">
                     المرشح قيد المراجعة
                   </p>
@@ -222,34 +222,8 @@ export function VerificationQueuePage() {
                       value={formatDate(selected.updatedAt)}
                     />
                     <InfoRow
-                      label="الهاتف"
-                      value={
-                        getText(selectedExtra, [
-                          'phone',
-                          'phoneNumber',
-                          'mobile',
-                        ]) || 'غير متوفر'
-                      }
-                    />
-                    <InfoRow
                       label="الموقع"
-                      value={
-                        getText(selectedExtra, [
-                          'location',
-                          'city',
-                          'country',
-                        ]) || 'غير متوفر'
-                      }
-                    />
-                    <InfoRow
-                      label="سنوات الخبرة"
-                      value={
-                        getText(selectedExtra, [
-                          'experienceYears',
-                          'yearsOfExperience',
-                          'experience',
-                        ]) || 'غير متوفر'
-                      }
+                      value={selected.location || 'غير متوفر'}
                     />
                   </div>
                 </div>
@@ -259,12 +233,7 @@ export function VerificationQueuePage() {
                     النبذة المهنية
                   </h3>
                   <p className="text-sm leading-6 text-muted">
-                    {getText(selectedExtra, [
-                      'bio',
-                      'summary',
-                      'about',
-                      'description',
-                    ]) ||
+                    {selected.bio ||
                       selected.headline ||
                       'لا توجد نبذة مهنية مضافة لهذا المرشح.'}
                   </p>
@@ -303,6 +272,17 @@ export function VerificationQueuePage() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
+
+                {review.isError && (
+                  <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      {review.error instanceof Error
+                        ? review.error.message
+                        : 'تعذر حفظ قرار المراجعة.'}
+                    </span>
+                  </div>
+                )}
 
                 <div>
                   <p className="mb-2 text-sm font-medium text-foreground">

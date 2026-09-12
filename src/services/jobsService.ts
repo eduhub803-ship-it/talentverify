@@ -7,6 +7,9 @@ import type {
   Job,
   JobApplication,
 } from '@/types/domain'
+import { buildCandidateDocumentPath, validateCvFile } from '@/features/candidate/cv-workflow'
+
+const CV_SIGNED_URL_TTL_SECONDS = 60 * 60
 
 interface CreateJobInput {
   title: string
@@ -15,7 +18,11 @@ interface CreateJobInput {
   experienceLevel?: string | null
   location: string
   jobType: string
+  status?: Job['status']
   createdBy: string
+  organizationId?: string | null
+  isExclusive?: boolean
+  tracks?: Job['tracks']
 }
 
 interface ApplyToJobInput {
@@ -116,11 +123,12 @@ async function getLatestCvUrl(candidateId: string): Promise<{
   if (error) throw error
   if (!data) return { url: null, fileName: null }
 
-  const { data: urlData } = supabase.storage
+  const { data: urlData, error: urlError } = await supabase.storage
     .from('candidate-documents')
-    .getPublicUrl(data.storage_path)
+    .createSignedUrl(data.storage_path, CV_SIGNED_URL_TTL_SECONDS)
+  if (urlError) throw urlError
 
-  return { url: urlData.publicUrl, fileName: data.file_name }
+  return { url: urlData.signedUrl, fileName: data.file_name }
 }
 
 async function uploadApplicationCv(candidateId: string, file: File): Promise<string> {
@@ -128,7 +136,10 @@ async function uploadApplicationCv(candidateId: string, file: File): Promise<str
     throw new Error('Mock CV uploads are handled by the mock application flow.')
   }
 
-  const path = `${candidateId}/applications/${Date.now()}-${file.name}`
+  const validation = validateCvFile(file)
+  if (!validation.ok) throw new Error(validation.message ?? 'Invalid CV file.')
+
+  const path = buildCandidateDocumentPath(candidateId, 'cv', file.name)
   const { error: uploadError } = await supabase.storage
     .from('candidate-documents')
     .upload(path, file)
@@ -144,10 +155,16 @@ async function uploadApplicationCv(candidateId: string, file: File): Promise<str
     file_size: file.size,
   })
 
-  if (documentError) throw documentError
+  if (documentError) {
+    await supabase.storage.from('candidate-documents').remove([path])
+    throw documentError
+  }
 
-  const { data } = supabase.storage.from('candidate-documents').getPublicUrl(path)
-  return data.publicUrl
+  const { data, error } = await supabase.storage
+    .from('candidate-documents')
+    .createSignedUrl(path, CV_SIGNED_URL_TTL_SECONDS)
+  if (error) throw error
+  return data.signedUrl
 }
 
 export const jobsService = {
@@ -202,9 +219,34 @@ export const jobsService = {
         experience_level: input.experienceLevel,
         location: input.location,
         job_type: input.jobType,
-        status: 'open',
+        status: input.status ?? 'open',
         created_by: input.createdBy,
+        organization_id: input.organizationId ?? null,
+        is_exclusive: Boolean(input.isExclusive),
+        tracks: input.tracks ?? [],
       })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Service 30: saved alerts fire the moment a role becomes browsable.
+    if ((input.status ?? 'open') === 'open') {
+      const { error: alertError } = await supabase.rpc('fire_job_alerts', {
+        target_job_id: data.id,
+      })
+      if (alertError) throw alertError
+    }
+    return mapJob(data)
+  },
+
+  async updateJobStatus(id: string, status: Job['status']): Promise<Job> {
+    if (!isSupabaseConfigured || !supabase) return mockDb.updateJobStatus(id, status)
+
+    const { data, error } = await supabase
+      .from('jobs')
+      .update({ status })
+      .eq('id', id)
       .select()
       .single()
 
@@ -255,16 +297,23 @@ export const jobsService = {
       getLatestCvUrl(candidateId),
       supabase
         .from('applications')
-        .select('job_id')
+        .select('job_id, status, created_at')
         .eq('candidate_id', candidateId),
     ])
 
     if (error) throw error
 
+    const rows = data ?? []
+
     return {
       existingCvUrl: url,
       existingCvName: fileName,
-      appliedJobIds: (data ?? []).map((row) => row.job_id as string),
+      appliedJobIds: rows.map((row) => row.job_id as string),
+      applications: rows.map((row) => ({
+        jobId: row.job_id as string,
+        status: row.status as ApplicationStatus,
+        createdAt: row.created_at as string,
+      })),
     }
   },
 
@@ -296,6 +345,14 @@ export const jobsService = {
       .single()
 
     if (error) throw error
+
+    // Same notifications the mock raises: the candidate, the hiring team and
+    // the admins. Written by a definer routine so no client can address them.
+    const { error: notifyError } = await supabase.rpc('notify_job_application', {
+      target_application_id: data.id,
+    })
+    if (notifyError) throw notifyError
+
     return mapApplication(data)
   },
 }

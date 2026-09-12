@@ -2,10 +2,12 @@
 
 DO $$
 BEGIN
-  CREATE TYPE job_status AS ENUM ('open', 'closed');
+  CREATE TYPE job_status AS ENUM ('draft', 'open', 'closed');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
+
+ALTER TYPE job_status ADD VALUE IF NOT EXISTS 'draft';
 
 DO $$
 BEGIN

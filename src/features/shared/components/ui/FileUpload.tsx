@@ -8,6 +8,8 @@ interface FileUploadProps {
   onFile: (file: File) => void
   disabled?: boolean
   label?: string
+  hint?: string
+  validateFile?: (file: File) => string | null
 }
 
 export function FileUpload({
@@ -16,6 +18,8 @@ export function FileUpload({
   onFile,
   disabled,
   label = 'Drag and drop or click to upload',
+  hint,
+  validateFile,
 }: FileUploadProps) {
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,10 +31,15 @@ export function FileUpload({
         setError(`File must be under ${maxSizeMb}MB`)
         return false
       }
+      const validationMessage = validateFile?.(file)
+      if (validationMessage) {
+        setError(validationMessage)
+        return false
+      }
       setError(null)
       return true
     },
-    [maxSizeMb],
+    [maxSizeMb, validateFile],
   )
 
   const handleFiles = (files: FileList | null) => {
@@ -60,7 +69,9 @@ export function FileUpload({
       >
         <Upload className="mb-3 h-8 w-8 text-muted" />
         <span className="text-sm font-medium text-foreground">{label}</span>
-        <span className="mt-1 text-xs text-muted">PDF, DOC, DOCX up to {maxSizeMb}MB</span>
+        <span className="mt-1 text-xs text-muted">
+          {hint ?? `PDF, DOC, DOCX up to ${maxSizeMb}MB`}
+        </span>
         <input
           type="file"
           className="sr-only"

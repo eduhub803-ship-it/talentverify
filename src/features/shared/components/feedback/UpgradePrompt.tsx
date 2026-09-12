@@ -22,14 +22,11 @@ export function UpgradePrompt({ className }: { className?: string }) {
           </p>
         </div>
       </div>
-      <Button
-        variant="primary"
-        onClick={() =>
-          window.alert('Pro billing coming soon. Contact sales@talentverify.com')
-        }
-      >
-        Upgrade to Pro
-      </Button>
+      <a href="mailto:sales@talentverify.com?subject=TalentVerify%20Pro%20upgrade">
+        <Button type="button" variant="primary">
+          Contact sales
+        </Button>
+      </a>
     </div>
   )
 }
