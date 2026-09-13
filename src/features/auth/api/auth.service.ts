@@ -94,11 +94,12 @@ export const authService = {
       return { profile, email: input.email, needsEmailConfirmation: false }
     }
 
+    const baseUrl = import.meta.env.VITE_AUTH_REDIRECT_URL || window.location.origin
     const { data, error } = await supabase.auth.signUp({
       email: input.email,
       password: input.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/login?verified=1`,
+        emailRedirectTo: `${baseUrl}/login?verified=1`,
         data: {
           full_name: input.fullName,
           role: input.role,
@@ -188,11 +189,12 @@ export const authService = {
   async resendSignupConfirmation(email: string): Promise<void> {
     if (!isSupabaseConfigured || !supabase) return
 
+    const baseUrl = import.meta.env.VITE_AUTH_REDIRECT_URL || window.location.origin
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/login?verified=1`,
+        emailRedirectTo: `${baseUrl}/login?verified=1`,
       },
     })
     if (error) throw new Error(error.message)
@@ -201,8 +203,9 @@ export const authService = {
   async sendPasswordReset(email: string): Promise<void> {
     if (!isSupabaseConfigured || !supabase) return
 
+    const baseUrl = import.meta.env.VITE_AUTH_REDIRECT_URL || window.location.origin
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${baseUrl}/reset-password`,
     })
     if (error) throw new Error(error.message)
   },
