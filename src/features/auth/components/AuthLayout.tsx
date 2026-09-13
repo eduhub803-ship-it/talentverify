@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ShieldCheck } from 'lucide-react'
+import { Footer } from '@/features/shared/components/Footer'
 
 export function AuthLayout({
   title,
@@ -12,8 +13,9 @@ export function AuthLayout({
   children: ReactNode
 }) {
   return (
-    <div className="flex min-h-screen">
-      <div className="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-primary to-primary-700 p-12 text-white lg:flex">
+    <div className="flex min-h-screen flex-col">
+      <div className="flex flex-1">
+        <div className="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-primary to-primary-700 p-12 text-white lg:flex">
         <Link to="/" className="flex items-center gap-2 text-lg font-semibold">
           <ShieldCheck className="h-7 w-7" />
           TalentVerify
@@ -44,6 +46,8 @@ export function AuthLayout({
           <div className="mt-8">{children}</div>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   )
 }

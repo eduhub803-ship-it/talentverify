@@ -33,6 +33,10 @@ import { HRJobsPage } from '@/features/jobs/pages/HRJobsPage'
 import { CreateJobPage } from '@/features/jobs/pages/CreateJobPage'
 import { HRJobDetailPage } from '@/features/jobs/pages/HRJobDetailPage'
 import { CandidateJobsPage } from '@/features/jobs/pages/CandidateJobsPage'
+import { LegalPagesContainer } from '@/features/shared/pages/LegalPagesContainer'
+import { PrivacyPage } from '@/features/candidate/pages/PrivacyPage'
+import { MyDataPage } from '@/features/candidate/pages/MyDataPage'
+import { DeleteAccountPage } from '@/features/candidate/pages/DeleteAccountPage'
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -42,6 +46,7 @@ export const router = createBrowserRouter([
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/legal/:page', element: <LegalPagesContainer /> },
     ],
   },
   { path: '/reset-password', element: <ResetPasswordPage /> },
@@ -60,6 +65,9 @@ export const router = createBrowserRouter([
           { path: 'contact-requests', element: <ContactRequestsPage /> },
           { path: 'cv-evaluation', element: <CvEvaluationPage /> },
           { path: 'career-services', element: <CareerServicesPage /> },
+          { path: 'settings/privacy', element: <PrivacyPage /> },
+          { path: 'settings/my-data', element: <MyDataPage /> },
+          { path: 'settings/delete-account', element: <DeleteAccountPage /> },
         ],
       },
     ],

@@ -20,6 +20,8 @@ export const registerSchema = z
     password: z.string().min(8, 'Password must be at least 8 characters'),
     role: z.enum(['candidate', 'hr']),
     organizationName: z.string().optional(),
+    agreeTerms: z.boolean().refine((v) => v === true, 'You must agree to the Terms & Conditions'),
+    agreePrivacy: z.boolean().refine((v) => v === true, 'You must agree to the Privacy Policy'),
   })
   .refine((data) => data.role !== 'hr' || (data.organizationName?.trim().length ?? 0) >= 2, {
     message: 'Organization name is required for HR registration',

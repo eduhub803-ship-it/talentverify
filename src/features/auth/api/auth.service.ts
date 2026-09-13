@@ -14,6 +14,8 @@ export interface RegisterInput {
   fullName: string
   role: UserRole
   organizationName?: string
+  agreeTerms?: boolean
+  agreePrivacy?: boolean
 }
 
 export interface RegisterResult {
@@ -106,6 +108,61 @@ export const authService = {
     })
     if (error) throw new Error(error.message)
     if (!data.user) throw new Error('Registration failed.')
+
+    // Store consent records for required policies
+    if (input.agreeTerms || input.agreePrivacy) {
+      try {
+        const consents = []
+        if (input.agreeTerms) {
+          consents.push({
+            user_id: data.user.id,
+            policy_key: 'terms_of_service',
+            policy_version: '1.0',
+            accepted: true,
+            accepted_at: new Date().toISOString(),
+            context: 'signup',
+            locale: 'en',
+          })
+        }
+        if (input.agreePrivacy) {
+          consents.push({
+            user_id: data.user.id,
+            policy_key: 'privacy_policy',
+            policy_version: '1.0',
+            accepted: true,
+            accepted_at: new Date().toISOString(),
+            context: 'signup',
+            locale: 'en',
+          })
+        }
+        if (consents.length > 0) {
+          await supabase.from('user_consents').insert(consents)
+        }
+      } catch (consentError) {
+        console.error('Error storing consent:', consentError)
+      }
+    }
+
+    // Create notification preferences for the new user
+    try {
+      await supabase.from('notification_preferences').insert({
+        user_id: data.user.id,
+        user_role: input.role,
+        job_alerts: true,
+        application_updates: true,
+        employer_contact: true,
+        career_services: true,
+        account_updates: true,
+        marketing_communications: false,
+        applications: true,
+        talent_requests: true,
+        recruitment_services: true,
+        organization_updates: true,
+        hr_marketing: false,
+      })
+    } catch (prefError) {
+      console.error('Error creating notification preferences:', prefError)
+    }
 
     if (!data.session) {
       return { profile: null, email: input.email, needsEmailConfirmation: true }

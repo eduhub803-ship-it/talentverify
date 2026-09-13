@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,11 +7,14 @@ import { registerSchema, type RegisterForm } from '../schemas/auth.schema'
 import { getDashboardPath, registerUser, resendSignupConfirmation } from '../actions'
 import { Input } from '@/features/shared/components/ui/Input'
 import { Button } from '@/features/shared/components/ui/Button'
+import { LanguageContext } from '@/context/LanguageContext'
 import { cn } from '@/lib/utils'
 
 export function RegisterPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const languageCtx = useContext(LanguageContext)
+  const language = languageCtx?.lang || 'en'
   const defaultRole = searchParams.get('role') === 'hr' ? 'hr' : 'candidate'
   const [error, setError] = useState<string | null>(null)
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null)
@@ -25,7 +28,7 @@ export function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: defaultRole },
+    defaultValues: { role: defaultRole, agreeTerms: false, agreePrivacy: false },
   })
 
   const role = useWatch({ control, name: 'role' })
@@ -39,6 +42,8 @@ export function RegisterPage() {
         fullName: data.fullName,
         role: data.role,
         organizationName: data.organizationName,
+        agreeTerms: data.agreeTerms,
+        agreePrivacy: data.agreePrivacy,
       })
       if (profile.needsEmailConfirmation) {
         setConfirmationEmail(profile.email)
@@ -153,11 +158,52 @@ export function RegisterPage() {
             {...register('organizationName')}
           />
         )}
+        <div className="space-y-3 rounded-lg bg-slate-50 p-4">
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 flex-shrink-0"
+              {...register('agreeTerms')}
+            />
+            <span className="text-sm text-slate-700">
+              {language === 'ar'
+                ? 'أوافق على '
+                : 'I agree to the '}
+              <Link to="/legal/terms" target="_blank" className="font-medium text-blue-600 hover:underline">
+                {language === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions'}
+              </Link>
+              {errors.agreeTerms && (
+                <span className="ml-2 text-xs text-red-600">{errors.agreeTerms.message}</span>
+              )}
+            </span>
+          </label>
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 flex-shrink-0"
+              {...register('agreePrivacy')}
+            />
+            <span className="text-sm text-slate-700">
+              {language === 'ar'
+                ? 'أقرّ بـ '
+                : 'I acknowledge the '}
+              <Link to="/legal/privacy" target="_blank" className="font-medium text-blue-600 hover:underline">
+                {language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
+              </Link>
+              {language === 'ar'
+                ? ' وأوافق على معالجة بيانات الحساب'
+                : ' and agree to necessary data processing'}
+              {errors.agreePrivacy && (
+                <span className="ml-2 text-xs text-red-600">{errors.agreePrivacy.message}</span>
+              )}
+            </span>
+          </label>
+        </div>
         {error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
         )}
         <Button type="submit" className="w-full" isLoading={isSubmitting}>
-          Create account
+          {language === 'ar' ? 'إنشاء حساب' : 'Create account'}
         </Button>
       </form>
       <p className="mt-6 text-center text-sm text-muted">
