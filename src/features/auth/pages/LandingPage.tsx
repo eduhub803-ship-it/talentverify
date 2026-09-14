@@ -56,13 +56,17 @@ export function LandingPage() {
 
   const t = languageApi?.t ?? ((key: string) => key)
 
-  // Detect and redirect recovery token to /reset-password
+  // Redirect password recovery links to /reset-password
   useEffect(() => {
     const hash = window.location.hash
-    if (hash.includes('type=recovery') || hash.includes('access_token')) {
-      navigate('/reset-password' + hash, { replace: true })
+    if (hash) {
+      const params = new URLSearchParams(hash.replace(/^#/, ''))
+      const authType = params.get('type')
+      if (authType === 'recovery') {
+        navigate('/reset-password' + hash, { replace: true })
+      }
     }
-  }, [])
+  }, [navigate])
 
   const currentLanguage =
     languageApi?.language ||
