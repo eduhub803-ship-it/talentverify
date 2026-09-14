@@ -1,5 +1,5 @@
-import { useContext } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useContext } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
   BadgeCheck,
@@ -50,10 +50,19 @@ const workflow = [
 ]
 
 export function LandingPage() {
+  const navigate = useNavigate()
   const language = useContext(LanguageContext)
   const languageApi = language as any
 
   const t = languageApi?.t ?? ((key: string) => key)
+
+  // Detect and redirect recovery token to /reset-password
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash.includes('type=recovery') || hash.includes('access_token')) {
+      navigate('/reset-password' + hash, { replace: true })
+    }
+  }, [])
 
   const currentLanguage =
     languageApi?.language ||
