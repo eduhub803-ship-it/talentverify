@@ -8,7 +8,7 @@ const config: Record<
   draft: {
     label: 'Draft',
     dot: 'bg-muted',
-    bg: 'bg-primary-50',
+    bg: 'bg-slate-100',
     text: 'text-muted',
   },
   pending: {
@@ -31,9 +31,9 @@ const config: Record<
   },
   rejected: {
     label: 'Rejected',
-    dot: 'bg-error',
+    dot: 'bg-red-500',
     bg: 'bg-red-50',
-    text: 'text-error',
+    text: 'text-red-600',
   },
 }
 

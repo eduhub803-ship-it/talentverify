@@ -3,11 +3,11 @@ import { cn } from '@/lib/utils'
 
 const variants = {
   primary:
-    'bg-primary text-white shadow-sm hover:bg-primary-700 disabled:opacity-50',
+    'bg-primary text-white hover:bg-primary-700 shadow-sm disabled:opacity-50',
   secondary:
-    'border border-border bg-white text-foreground shadow-sm hover:border-primary-100 hover:bg-primary-50 disabled:opacity-50',
-  ghost: 'text-foreground hover:bg-primary-50 disabled:opacity-50',
-  danger: 'bg-error text-white hover:bg-red-700 disabled:opacity-50',
+    'bg-white text-foreground border border-border hover:bg-slate-50 disabled:opacity-50',
+  ghost: 'text-foreground hover:bg-slate-100 disabled:opacity-50',
+  danger: 'bg-red-600 text-white hover:bg-red-700 disabled:opacity-50',
 } as const
 
 const sizes = {

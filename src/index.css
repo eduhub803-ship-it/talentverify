@@ -1,24 +1,15 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-brand-navy: #061A4D;
-  --color-brand-blue: #0B5ED7;
-  --color-brand-bright: #198CFF;
-  --color-brand-light: #D9EEFF;
-  --color-primary: #0B5ED7;
-  --color-primary-50: #EEF7FF;
-  --color-primary-100: #D9EEFF;
-  --color-primary-700: #0746A6;
-  --color-primary-900: #061A4D;
-  --color-surface: #F6FAFF;
-  --color-surface-raised: #FFFFFF;
-  --color-foreground: #061A4D;
+  --color-primary: #0a66c2;
+  --color-primary-50: #eff6ff;
+  --color-primary-700: #084c94;
+  --color-surface: #f8fafc;
+  --color-foreground: #0f172a;
   --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-error: #dc2626;
-  --color-info: #0B5ED7;
-  --color-muted: #52637A;
-  --color-border: #DCE7F5;
+  --color-warning: #f59e0b;
+  --color-muted: #64748b;
+  --color-border: #e2e8f0;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -29,52 +20,5 @@
 
   body {
     @apply bg-surface text-foreground font-sans;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply text-brand-navy;
-  }
-
-  ::selection {
-    @apply bg-primary-100 text-brand-navy;
-  }
-
-  table {
-    @apply w-full border-collapse text-sm;
-  }
-
-  thead {
-    @apply border-b border-border bg-primary-50 text-muted;
-  }
-
-  th {
-    @apply px-4 py-3 text-start font-semibold;
-  }
-
-  td {
-    @apply border-b border-border px-4 py-3;
-  }
-}
-
-@layer components {
-  .tv-table {
-    @apply w-full border-collapse text-sm;
-  }
-
-  .tv-table thead {
-    @apply border-b border-border bg-primary-50 text-muted;
-  }
-
-  .tv-table th {
-    @apply px-4 py-3 text-start font-semibold;
-  }
-
-  .tv-table td {
-    @apply border-b border-border px-4 py-3;
   }
 }

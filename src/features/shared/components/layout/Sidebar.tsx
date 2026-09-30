@@ -1,9 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { X } from 'lucide-react'
+import { ShieldCheck, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useContext } from 'react'
 import { LanguageContext } from '@/context/LanguageContext'
-import { BrandLogo } from '@/features/shared/components/brand/BrandLogo'
 
 export interface NavItem {
   to: string
@@ -41,10 +40,15 @@ export function Sidebar({
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-border px-5">
-          <BrandLogo variant="mark" imgClassName="h-10 w-auto" />
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <span className="font-semibold text-foreground">TalentVerify</span>
+          </div>
           <button
             type="button"
-            className="rounded-lg p-1 text-muted hover:bg-primary-50 lg:hidden"
+            className="rounded-lg p-1 text-muted hover:bg-slate-100 lg:hidden"
             onClick={onMobileClose}
           >
             <X className="h-5 w-5" />
@@ -62,7 +66,7 @@ export function Sidebar({
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-primary-50 text-primary'
-                    : 'text-muted hover:bg-primary-50 hover:text-foreground',
+                    : 'text-muted hover:bg-slate-50 hover:text-foreground',
                 )
               }
             >

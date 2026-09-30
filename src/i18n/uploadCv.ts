@@ -38,7 +38,7 @@ export const uploadCvTranslations = {
     'uploadCv.uploadFailed': 'فشل الرفع',
     'uploadCv.uploadLabel': 'رفع السيرة الذاتية المكتملة',
     'uploadCv.yourCv': 'سيرتك الذاتية',
-    'uploadCv.templateTitle': 'قالب السيرة الذاتية المتوافق مع أنظمة التتبع من Talent Verify',
+    'uploadCv.templateTitle': 'قالب السيرة الذاتية المتوافق مع أنظمة التتبع من TalentVerify',
     'uploadCv.templateDescription':
       'استخدم قالب السيرة الذاتية المتوافق مع أنظمة تتبع المتقدمين لإنشاء سيرة ذاتية واضحة واحترافية يسهل على أنظمة التتبع وأخصائيي التوظيف قراءتها. القالب متاح بالإنجليزية فقط.',
     'uploadCv.templateFeatureAts':

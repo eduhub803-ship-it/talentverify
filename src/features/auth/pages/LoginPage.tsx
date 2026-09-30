@@ -67,7 +67,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your Talent Verify account">
+    <AuthLayout title="Welcome back" subtitle="Sign in to your TalentVerify account">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
           label="Email"
@@ -84,7 +84,7 @@ export function LoginPage() {
           {...register('password')}
         />
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-error">{error}</p>
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
         )}
         {notice && (
           <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">

@@ -3,7 +3,7 @@ import type { DocumentType, TalentDocument } from '@/types/domain'
 export const CV_MAX_SIZE_MB = 10
 export const CV_MAX_SIZE_BYTES = CV_MAX_SIZE_MB * 1024 * 1024
 
-// Talent Verify ships exactly one official candidate CV template: English, ATS-friendly.
+// TalentVerify ships exactly one official candidate CV template: English, ATS-friendly.
 export const CV_TEMPLATE = {
   language: 'English',
   titleKey: 'uploadCv.templateTitle',
