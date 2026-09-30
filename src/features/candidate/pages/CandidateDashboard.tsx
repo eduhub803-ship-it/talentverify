@@ -104,7 +104,7 @@ export function CandidateDashboard() {
         description={t('candidateDashboard.description')}
       />
 
-      <Card className="mb-8 border-primary/20 bg-gradient-to-br from-white to-primary-50/30">
+      <Card className="mb-8 border-primary/20 bg-primary-50/50">
         <CardBody className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4">
             <Avatar
@@ -122,7 +122,7 @@ export function CandidateDashboard() {
               {profile && <StatusBadge status={profile.verificationStatus} />}
             </div>
             {profile?.rejectionReason && (
-              <p className="mt-2 text-sm text-red-600">{profile.rejectionReason}</p>
+              <p className="mt-2 text-sm text-error">{profile.rejectionReason}</p>
             )}
             <p className="mt-3 text-sm text-muted">
               Talent Passport {completion.percent}% complete. Next: {completion.nextAction}.

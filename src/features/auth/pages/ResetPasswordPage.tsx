@@ -45,7 +45,7 @@ export function ResetPasswordPage() {
   return (
     <AuthLayout
       title="Set new password"
-      subtitle="Choose a new password for your TalentVerify account."
+      subtitle="Choose a new password for your Talent Verify account."
     >
       {isComplete ? (
         <div className="space-y-4">
@@ -69,7 +69,7 @@ export function ResetPasswordPage() {
             {...register('password')}
           />
           {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-error">{error}</p>
           )}
           <Button type="submit" className="w-full" isLoading={isSubmitting}>
             Update password

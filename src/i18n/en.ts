@@ -195,7 +195,8 @@ export const en = {
   "landing.headlineLine1": "Verified talent.",
   "landing.headlineLine2": "Trusted hiring.",
   "landing.description":
-    "TalentVerify is a professional platform where credentials are verified before candidates become searchable by approved HR organizations.",
+    "Talent Verify is a professional platform where credentials are verified before candidates become searchable by approved HR organizations.",
+  "landing.tagline": "Connecting HR teams with trusted, verified talent.",
   "landing.joinCandidate": "Join as Candidate",
   "landing.registerHr": "Register HR Organization",
   "Upload & verify": "Upload & verify",

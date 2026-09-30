@@ -6,7 +6,7 @@ export function UpgradePrompt({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 rounded-xl border border-primary/30 bg-gradient-to-br from-primary-50 to-white p-6 sm:flex-row sm:items-center sm:justify-between',
+        'flex flex-col gap-4 rounded-lg border border-primary/30 bg-primary-50 p-6 sm:flex-row sm:items-center sm:justify-between',
         className,
       )}
     >
@@ -15,14 +15,14 @@ export function UpgradePrompt({ className }: { className?: string }) {
           <Crown className="h-6 w-6" />
         </div>
         <div>
-          <h3 className="font-semibold text-foreground">Upgrade to TalentVerify Pro</h3>
+          <h3 className="font-semibold text-foreground">Upgrade to Talent Verify Pro</h3>
           <p className="mt-1 text-sm text-muted">
             You&apos;ve used your 2 free CV evaluations. Pro unlocks unlimited AI
             evaluations, priority verification, and advanced insights.
           </p>
         </div>
       </div>
-      <a href="mailto:sales@talentverify.com?subject=TalentVerify%20Pro%20upgrade">
+      <a href="mailto:sales@talentverify.com?subject=Talent%20Verify%20Pro%20upgrade">
         <Button type="button" variant="primary">
           Contact sales
         </Button>

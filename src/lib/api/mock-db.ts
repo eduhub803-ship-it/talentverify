@@ -2278,7 +2278,7 @@ export const mockDb = {
       title: plan === 'pro' ? 'Upgraded to Pro' : 'Plan updated',
       message:
         plan === 'pro'
-          ? 'Your organization now has TalentVerify Pro: unlimited job posts, search and matching.'
+          ? 'Your organization now has Talent Verify Pro: unlimited job posts, search and matching.'
           : 'Your organization is on the Free plan.',
       entityType: 'organization',
       entityId: organizationId,

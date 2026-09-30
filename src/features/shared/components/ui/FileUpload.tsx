@@ -52,8 +52,8 @@ export function FileUpload({
     <div className="space-y-2">
       <label
         className={cn(
-          'flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 transition-colors',
-          dragOver ? 'border-primary bg-primary-50/50' : 'border-border bg-slate-50/50',
+          'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 transition-colors',
+          dragOver ? 'border-primary bg-primary-50' : 'border-border bg-white',
           disabled && 'cursor-not-allowed opacity-50',
         )}
         onDragOver={(e) => {
@@ -80,7 +80,7 @@ export function FileUpload({
           onChange={(e) => handleFiles(e.target.files)}
         />
       </label>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-error">{error}</p>}
     </div>
   )
 }

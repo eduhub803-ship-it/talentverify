@@ -1,11 +1,11 @@
 import { cn } from '@/lib/utils'
 
 const variants = {
-  default: 'bg-slate-100 text-foreground',
-  primary: 'bg-primary-50 text-primary',
+  default: 'bg-primary-50 text-foreground',
+  primary: 'bg-primary-100 text-primary-700',
   success: 'bg-green-50 text-success',
   warning: 'bg-amber-50 text-warning',
-  danger: 'bg-red-50 text-red-600',
+  danger: 'bg-red-50 text-error',
 } as const
 
 export function Badge({

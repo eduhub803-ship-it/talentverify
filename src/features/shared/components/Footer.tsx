@@ -1,6 +1,8 @@
 import { useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { LanguageContext } from '@/context/LanguageContext'
+import { BrandLogo } from '@/features/shared/components/brand/BrandLogo'
+import { BRAND } from '@/features/shared/brand'
 
 export function Footer() {
   const langCtx = useContext(LanguageContext)
@@ -27,10 +29,13 @@ export function Footer() {
 
   return (
     <footer
-      className={`border-t bg-slate-50 py-8 ${isRTL ? 'text-right' : 'text-left'}`}
+      className={`border-t border-border bg-white py-8 ${isRTL ? 'text-right' : 'text-left'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className={`mb-6 flex ${isRTL ? 'justify-end' : 'justify-start'}`}>
+          <BrandLogo variant="logo" imgClassName="h-8 w-auto" />
+        </div>
         <div
           className={`flex flex-wrap gap-6 ${isRTL ? 'justify-end' : 'justify-start'}`}
         >
@@ -38,23 +43,23 @@ export function Footer() {
             <Link
               key={link.href}
               to={link.href}
-              className="text-sm text-slate-600 hover:text-slate-900 hover:underline transition-colors"
+              className="text-sm text-muted transition-colors hover:text-primary hover:underline"
             >
               {link.label}
             </Link>
           ))}
         </div>
 
-        <div className="mt-6 border-t pt-6 text-xs text-slate-500">
+        <div className="mt-6 border-t border-border pt-6 text-xs text-muted">
           <p>
             {language === 'ar'
-              ? '© 2026 Talent Verify. جميع الحقوق محفوظة.'
-              : '© 2026 Talent Verify. All rights reserved.'}
+              ? `© 2026 ${BRAND.name}. جميع الحقوق محفوظة.`
+              : `© 2026 ${BRAND.name}. All rights reserved.`}
           </p>
-          <p className="mt-2 text-slate-400">
+          <p className="mt-2 text-muted/75">
             {language === 'ar'
-              ? 'DRAFT — سياسات قيد المراجعة القانونية'
-              : 'DRAFT — Policies under legal review'}
+              ? 'DRAFT - سياسات قيد المراجعة القانونية'
+              : 'DRAFT - Policies under legal review'}
           </p>
         </div>
       </div>

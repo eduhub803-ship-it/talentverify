@@ -166,7 +166,7 @@ export function EmployerProfilePage() {
                 <p className="font-medium text-foreground">{t('employer.plan.upgradeTitle')}</p>
                 <p className="mt-1 text-muted">{t('employer.plan.upgradeDescription')}</p>
                 <a
-                  href="mailto:careers@seh.jo?subject=TalentVerify%20Pro"
+                  href="mailto:careers@seh.jo?subject=Talent%20Verify%20Pro"
                   className="mt-2 inline-block"
                 >
                   <Button type="button" size="sm" variant="secondary">
@@ -317,4 +317,3 @@ function ProfileForm({
     </Card>
   )
 }
-

@@ -21,13 +21,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={cn(
-            'flex h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50',
-            error && 'border-red-500 focus-visible:ring-red-200',
+            'flex h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground shadow-sm placeholder:text-muted focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-50',
+            error && 'border-error focus-visible:ring-red-200',
             className,
           )}
           {...props}
         />
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-error">{error}</p>}
         {hint && !error && <p className="text-xs text-muted">{hint}</p>}
       </div>
     )
