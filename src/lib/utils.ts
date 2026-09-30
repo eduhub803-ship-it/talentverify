@@ -5,9 +5,23 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(iso: string | null | undefined): string {
+type DateLanguage = 'en' | 'ar'
+
+function resolveDateLocale(language?: DateLanguage) {
+  const activeLanguage =
+    language ??
+    (typeof document !== 'undefined' && document.documentElement.lang === 'ar'
+      ? 'ar'
+      : 'en')
+  return activeLanguage === 'ar' ? 'ar-JO' : 'en-US'
+}
+
+export function formatDate(
+  iso: string | null | undefined,
+  language?: DateLanguage,
+): string {
   if (!iso) return '—'
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(resolveDateLocale(language), {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

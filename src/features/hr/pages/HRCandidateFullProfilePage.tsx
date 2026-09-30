@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -19,6 +19,7 @@ import { Badge } from '@/features/shared/components/ui/Badge'
 import { Skeleton } from '@/features/shared/components/ui/Skeleton'
 import { EmptyState } from '@/features/shared/components/layout/EmptyState'
 import { useAuthStore } from '@/stores/auth-store'
+import { LanguageContext } from '@/context/LanguageContext'
 import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
 import {
   fetchCandidateFullProfile,
@@ -32,6 +33,8 @@ import {
 export function HRCandidateFullProfilePage() {
   const { id } = useParams<{ id: string }>()
   const hrUserId = useAuthStore((s) => s.profile!.id)
+  const language = useContext(LanguageContext)
+  const t = language?.t ?? ((key: string) => key)
   const qc = useQueryClient()
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
@@ -72,7 +75,7 @@ export function HRCandidateFullProfilePage() {
       qc.invalidateQueries({ queryKey: notificationsQueryKeys.root })
     },
     onError: (e) =>
-      setContactError(e instanceof Error ? e.message : 'Failed to send request'),
+      setContactError(e instanceof Error ? e.message : t('hrCandidate.sendFailed')),
   })
 
   const shortlist = useMutation({
@@ -111,15 +114,15 @@ export function HRCandidateFullProfilePage() {
     return (
       <div>
         <Link to="/hr/search" className="text-sm text-primary hover:underline">
-          ← Back to search
+          ← {t('hrCandidate.backToSearch')}
         </Link>
         <EmptyState
           icon={BadgeCheck}
-          title="Profile unavailable"
+          title={t('hrCandidate.profileUnavailable')}
           description={
             error instanceof Error
               ? error.message
-              : 'Candidate not found or not verified.'
+              : t('hrCandidate.notFound')
           }
         />
       </div>
@@ -133,7 +136,7 @@ export function HRCandidateFullProfilePage() {
         className="mb-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to search
+        {t('hrCandidate.backToSearch')}
       </Link>
 
       <div className="mb-4 flex items-center gap-3">
@@ -155,7 +158,7 @@ export function HRCandidateFullProfilePage() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-success">
               <BadgeCheck className="h-4 w-4" />
-              Verified
+              {t('status.verified')}
             </span>
             <Button
               type="button"
@@ -165,7 +168,7 @@ export function HRCandidateFullProfilePage() {
               onClick={() => shortlist.mutate()}
             >
               <Star className="h-4 w-4" />
-              {isShortlisted ? 'Shortlisted' : 'Shortlist'}
+              {isShortlisted ? t('candidateSearch.shortlisted') : t('candidateSearch.shortlist')}
             </Button>
           </div>
         }
@@ -175,7 +178,7 @@ export function HRCandidateFullProfilePage() {
         <Card className="overflow-hidden">
           <CardBody className="space-y-4 p-0">
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
-              <h2 className="font-semibold">CV Preview</h2>
+              <h2 className="font-semibold">{t('hrCandidate.cvPreview')}</h2>
               <Button
                 variant="secondary"
                 size="sm"
@@ -183,18 +186,18 @@ export function HRCandidateFullProfilePage() {
                 onClick={handleDownload}
               >
                 <Download className="h-4 w-4" />
-                Download CV
+                {t('hrCandidate.downloadCv')}
               </Button>
             </div>
             {cvUrl ? (
               <iframe
-                title={`CV — ${candidate.name}`}
+                title={`${t('hrCandidate.cvPreview')} - ${candidate.name}`}
                 src={cvUrl}
                 className="h-[min(70vh,560px)] w-full border-0 bg-slate-100"
               />
             ) : (
               <div className="px-5 py-16 text-center text-sm text-muted">
-                No CV on file for this candidate.
+                {t('hrCandidate.noCv')}
               </div>
             )}
           </CardBody>
@@ -203,12 +206,12 @@ export function HRCandidateFullProfilePage() {
         <div className="space-y-6">
           <Card>
             <CardBody className="space-y-5">
-              <h2 className="font-semibold">Candidate information</h2>
+              <h2 className="font-semibold">{t('hrCandidate.information')}</h2>
               <dl className="space-y-3 text-sm">
                 <div className="flex gap-2">
                   <Mail className="mt-0.5 h-4 w-4 text-muted" />
                   <div>
-                    <dt className="text-muted">Email</dt>
+                    <dt className="text-muted">{t('hrCandidate.email')}</dt>
                     <dd className="font-medium">{candidate.email}</dd>
                   </div>
                 </div>
@@ -216,22 +219,27 @@ export function HRCandidateFullProfilePage() {
                   <div className="flex gap-2">
                     <MapPin className="mt-0.5 h-4 w-4 text-muted" />
                     <div>
-                      <dt className="text-muted">Location</dt>
+                      <dt className="text-muted">{t('hrCandidate.location')}</dt>
                       <dd className="font-medium">{candidate.location}</dd>
                     </div>
                   </div>
                 )}
                 {candidate.experienceYears != null && (
                   <div>
-                    <dt className="text-muted">Experience</dt>
-                    <dd className="font-medium">{candidate.experienceYears} years</dd>
+                    <dt className="text-muted">{t('hrCandidate.experience')}</dt>
+                    <dd className="font-medium">
+                      {t('hrCandidate.years').replace(
+                        '{count}',
+                        String(candidate.experienceYears),
+                      )}
+                    </dd>
                   </div>
                 )}
                 {candidate.education && (
                   <div className="flex gap-2">
                     <GraduationCap className="mt-0.5 h-4 w-4 text-muted" />
                     <div>
-                      <dt className="text-muted">Education</dt>
+                      <dt className="text-muted">{t('hrCandidate.education')}</dt>
                       <dd className="font-medium">{candidate.education}</dd>
                     </div>
                   </div>
@@ -239,7 +247,7 @@ export function HRCandidateFullProfilePage() {
               </dl>
 
               <div>
-                <h3 className="text-sm font-medium text-muted">Skills</h3>
+                <h3 className="text-sm font-medium text-muted">{t('hrCandidate.skills')}</h3>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {candidate.skills.map((s) => (
                     <Badge key={s} variant="primary">
@@ -252,7 +260,7 @@ export function HRCandidateFullProfilePage() {
               {candidate.jobMatchScore != null && (
                 <div className="rounded-lg bg-primary-50 px-4 py-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                    Job match score
+                    {t('hrCandidate.jobMatchScore')}
                   </p>
                   <p className="mt-1 text-3xl font-semibold text-primary">
                     {candidate.jobMatchScore}%
@@ -264,7 +272,7 @@ export function HRCandidateFullProfilePage() {
                 <div className="rounded-lg border border-border bg-slate-50 p-4">
                   <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Sparkles className="h-4 w-4 text-primary" />
-                    AI summary
+                    {t('hrCandidate.aiSummary')}
                   </p>
                   <p className="mt-2 text-sm text-muted">{candidate.aiSummary}</p>
                 </div>
@@ -274,14 +282,14 @@ export function HRCandidateFullProfilePage() {
 
           <Card>
             <CardBody className="space-y-4">
-              <h3 className="font-semibold">Send contact request</h3>
+              <h3 className="font-semibold">{t('hrCandidate.contactTitle')}</h3>
               {sent ? (
-                <p className="text-sm text-success">Request sent successfully.</p>
+                <p className="text-sm text-success">{t('hrCandidate.requestSent')}</p>
               ) : (
                 <>
                   <textarea
                     className="min-h-[100px] w-full rounded-lg border border-border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                    placeholder="Introduce your organization and role..."
+                    placeholder={t('hrCandidate.messagePlaceholder')}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                   />
@@ -294,7 +302,7 @@ export function HRCandidateFullProfilePage() {
                     isLoading={contact.isPending}
                     onClick={() => contact.mutate()}
                   >
-                    Send request
+                    {t('hrCandidate.sendRequest')}
                   </Button>
                 </>
               )}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,6 +7,8 @@ import { resetPasswordSchema, type ResetPasswordForm } from '../schemas/auth.sch
 import { updatePassword } from '../actions'
 import { Input } from '@/features/shared/components/ui/Input'
 import { Button } from '@/features/shared/components/ui/Button'
+import { LanguageContext } from '@/context/LanguageContext'
+import { localizeMessage } from '@/i18n/errors'
 
 function readAuthLinkError(): string | null {
   const searchParams = new URLSearchParams(window.location.search)
@@ -20,6 +22,8 @@ function readAuthLinkError(): string | null {
 }
 
 export function ResetPasswordPage() {
+  const language = useContext(LanguageContext)
+  const t = language?.t ?? ((key: string) => key)
   const [error, setError] = useState<string | null>(() => {
     const authError = readAuthLinkError()
     return authError ? decodeURIComponent(authError).replace(/\+/g, ' ') : null
@@ -44,35 +48,37 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout
-      title="Set new password"
-      subtitle="Choose a new password for your TalentVerify account."
+      title={t('auth.reset.title')}
+      subtitle={t('auth.reset.subtitle')}
     >
       {isComplete ? (
         <div className="space-y-4">
           <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            Password updated. Sign in with your new password.
+            {t('auth.reset.complete')}
           </p>
           <Link to="/login">
             <Button type="button" className="w-full">
-              Sign in
+              {t('auth.signIn.submit')}
             </Button>
           </Link>
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
-            label="Password"
+            label={t('auth.password')}
             type="password"
             autoComplete="new-password"
-            hint="At least 8 characters"
-            error={errors.password?.message}
+            hint={t('auth.passwordHint')}
+            error={localizeMessage(errors.password?.message, t)}
             {...register('password')}
           />
           {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              {localizeMessage(error, t)}
+            </p>
           )}
           <Button type="submit" className="w-full" isLoading={isSubmitting}>
-            Update password
+            {t('auth.reset.submit')}
           </Button>
         </form>
       )}

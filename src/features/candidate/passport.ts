@@ -22,6 +22,31 @@ export interface PassportCompletion {
   canSubmitForVerification: boolean
 }
 
+type TFunction = (key: string) => string
+
+const passportTextKeys: Record<string, string> = {
+  CV: 'candidatePassport.cv',
+  'CV upload': 'candidatePassport.cvUpload',
+  'Career preferences': 'candidateProfile.section.career',
+  'Education or experience': 'candidatePassport.educationOrExperience',
+  'Professional profile': 'candidateProfile.section.professional',
+  Skills: 'candidateProfile.section.skills',
+  'Submit for verification': 'Submit for verification',
+  'at least one structured skill': 'candidatePassport.structuredSkill',
+  'education or professional experience': 'candidatePassport.educationOrExperience',
+  'employment type': 'candidatePassport.employmentType',
+  location: 'candidateProfile.location',
+  'preferred field': 'candidatePassport.preferredField',
+  'preferred location': 'candidatePassport.preferredLocation',
+  'professional headline': 'candidateProfile.professionalHeadline',
+  'professional summary': 'candidateProfile.summary',
+}
+
+export function translatePassportText(value: string, t: TFunction): string {
+  const key = passportTextKeys[value]
+  return key ? t(key) : value
+}
+
 export const emptyCareerPreferences: CandidateCareerPreferences = {
   openToWork: true,
   employmentTypes: [],

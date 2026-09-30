@@ -1,5 +1,6 @@
 import { en } from "./en"
 import { ar } from "./ar"
+import { commonTranslations } from "./common"
 import { layoutTranslations } from "./layout"
 import { candidateDashboardTranslations } from "./candidateDashboard"
 import { candidateProfileTranslations } from "./candidateProfile"
@@ -12,6 +13,7 @@ import { employerTranslations } from "./employer"
 export const translations = {
   en: {
     ...en,
+    ...commonTranslations.en,
     ...layoutTranslations.en,
     ...candidateDashboardTranslations.en,
     ...candidateProfileTranslations.en,
@@ -23,6 +25,7 @@ export const translations = {
   },
   ar: {
     ...ar,
+    ...commonTranslations.ar,
     ...layoutTranslations.ar,
     ...candidateDashboardTranslations.ar,
     ...candidateProfileTranslations.ar,

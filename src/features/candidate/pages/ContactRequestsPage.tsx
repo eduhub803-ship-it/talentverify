@@ -7,6 +7,7 @@ import { Button } from '@/features/shared/components/ui/Button'
 import { Badge } from '@/features/shared/components/ui/Badge'
 import { EmptyState } from '@/features/shared/components/layout/EmptyState'
 import { formatDate } from '@/lib/utils'
+import { translateStatus } from '@/i18n/status'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
 import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
@@ -17,6 +18,7 @@ export function ContactRequestsPage() {
   const qc = useQueryClient()
   const language = useContext(LanguageContext)
   const t = language?.t ?? ((key: string) => key)
+  const lang = language?.lang ?? 'en'
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['candidate', 'contacts', userId],
@@ -65,7 +67,7 @@ export function ContactRequestsPage() {
                     <p className="text-sm text-muted">
                       {t('contactRequests.from')}{' '}
                       {req.hrName ?? t('contactRequests.hrRepresentative')} ·{' '}
-                      {formatDate(req.createdAt)}
+                      {formatDate(req.createdAt, lang)}
                     </p>
                     <p className="mt-3 text-sm text-foreground">{req.message}</p>
                   </div>
@@ -79,7 +81,7 @@ export function ContactRequestsPage() {
                             : 'warning'
                       }
                     >
-                      {req.status}
+                      {translateStatus(req.status, t)}
                     </Badge>
                     {req.status === 'pending' && (
                       <div className="flex gap-2">

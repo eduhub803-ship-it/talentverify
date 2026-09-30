@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,10 +7,14 @@ import { loginSchema, type LoginForm } from '../schemas/auth.schema'
 import { getDashboardPath, loginUser, resendSignupConfirmation } from '../actions'
 import { Input } from '@/features/shared/components/ui/Input'
 import { Button } from '@/features/shared/components/ui/Button'
+import { LanguageContext } from '@/context/LanguageContext'
+import { localizeMessage } from '@/i18n/errors'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const language = useContext(LanguageContext)
+  const t = language?.t ?? ((key: string) => key)
   const params = new URLSearchParams(location.search)
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
   const authError =
@@ -23,7 +27,7 @@ export function LoginPage() {
   )
   const [notice, setNotice] = useState<string | null>(
     !authError && params.get('verified') === '1'
-      ? 'Email confirmed. Sign in with your email and password.'
+      ? 'auth.signIn.confirmed'
       : null,
   )
   const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
@@ -58,7 +62,7 @@ export function LoginPage() {
     setNotice(null)
     try {
       await resendSignupConfirmation(unconfirmedEmail)
-      setNotice('Verification email sent. Check your inbox for the latest link.')
+      setNotice('auth.notice.verificationSent')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Verification email could not be sent.')
     } finally {
@@ -67,28 +71,30 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your TalentVerify account">
+    <AuthLayout title={t('auth.signIn.title')} subtitle={t('auth.signIn.subtitle')}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
-          label="Email"
+          label={t('auth.email')}
           type="email"
           autoComplete="email"
-          error={errors.email?.message}
+          error={localizeMessage(errors.email?.message, t)}
           {...register('email')}
         />
         <Input
-          label="Password"
+          label={t('auth.password')}
           type="password"
           autoComplete="current-password"
-          error={errors.password?.message}
+          error={localizeMessage(errors.password?.message, t)}
           {...register('password')}
         />
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            {localizeMessage(error, t)}
+          </p>
         )}
         {notice && (
           <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {notice}
+            {notice.startsWith('auth.') ? t(notice) : notice}
           </p>
         )}
         {unconfirmedEmail && (
@@ -98,23 +104,23 @@ export function LoginPage() {
             className="w-full"
             isLoading={isResending}
             onClick={onResendConfirmation}
-          >
-            Resend verification email
+        >
+            {t('auth.signIn.resend')}
           </Button>
         )}
         <Button type="submit" className="w-full" isLoading={isSubmitting}>
-          Sign in
+          {t('auth.signIn.submit')}
         </Button>
       </form>
       <p className="mt-4 text-center text-sm">
         <Link to="/forgot-password" className="font-medium text-primary hover:underline">
-          Forgot password?
+          {t('auth.signIn.forgotPassword')}
         </Link>
       </p>
       <p className="mt-4 text-center text-sm text-muted">
-        Don&apos;t have an account?{' '}
+        {t('auth.signIn.noAccount')}{' '}
         <Link to="/register" className="font-medium text-primary hover:underline">
-          Register
+          {t('auth.signIn.register')}
         </Link>
       </p>
     </AuthLayout>

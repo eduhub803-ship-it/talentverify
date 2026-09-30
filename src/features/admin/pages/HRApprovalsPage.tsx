@@ -19,6 +19,7 @@ import { Button } from '@/features/shared/components/ui/Button'
 import { Badge } from '@/features/shared/components/ui/Badge'
 import { EmptyState } from '@/features/shared/components/layout/EmptyState'
 import { formatDate } from '@/lib/utils'
+import { translateStatus } from '@/i18n/status'
 import { LanguageContext } from '@/context/LanguageContext'
 import { fetchPendingHrOrganizations, reviewHrOrganization } from '../actions'
 import { adminQueryKeys, invalidateAdminWorkspace } from '../queryKeys'
@@ -65,15 +66,15 @@ function normalizeWebsite(website?: string | null) {
 }
 
 function getContactName(org: HRApprovalItem) {
-  return safeText(org.contactName) || safeText(org.contactPerson) || 'غير متوفر'
+  return safeText(org.contactName) || safeText(org.contactPerson)
 }
 
 function getContactEmail(org: HRApprovalItem) {
-  return safeText(org.contactEmail) || safeText(org.email) || 'غير متوفر'
+  return safeText(org.contactEmail) || safeText(org.email)
 }
 
 function getPhone(org: HRApprovalItem) {
-  return safeText(org.phone) || safeText(org.phoneNumber) || 'غير متوفر'
+  return safeText(org.phone) || safeText(org.phoneNumber)
 }
 
 function getLocation(org: HRApprovalItem) {
@@ -81,13 +82,14 @@ function getLocation(org: HRApprovalItem) {
   if (direct) return direct
 
   const parts = [safeText(org.city), safeText(org.country)].filter(Boolean)
-  return parts.length ? parts.join('، ') : 'غير متوفر'
+  return parts.length ? parts.join(', ') : ''
 }
 
 export function HRApprovalsPage() {
   const qc = useQueryClient()
   const language = useContext(LanguageContext)
   const t = language?.t ?? ((key: string) => key)
+  const lang = language?.lang ?? 'en'
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [reviewNotes, setReviewNotes] = useState('')
@@ -125,14 +127,14 @@ export function HRApprovalsPage() {
     if (!selectedOrg || review.isPending) return
 
     if (!approved && !reviewNotes.trim()) {
-      setFormError('يرجى كتابة سبب الرفض قبل رفض اعتماد المؤسسة.')
+      setFormError(t('hrApprovals.rejectReasonRequired'))
       return
     }
     setFormError(null)
 
     const message = approved
-      ? `هل أنت متأكد من اعتماد مؤسسة ${selectedOrg.name}؟`
-      : `هل أنت متأكد من رفض مؤسسة ${selectedOrg.name}؟`
+      ? t('hrApprovals.confirmApprove').replace('{name}', selectedOrg.name)
+      : t('hrApprovals.confirmReject').replace('{name}', selectedOrg.name)
 
     if (!window.confirm(message)) return
 
@@ -162,10 +164,10 @@ export function HRApprovalsPage() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-semibold text-foreground">
-                    طلبات اعتماد مؤسسات الموارد البشرية
+                    {t('hrApprovals.requestsTitle')}
                   </h2>
                   <p className="text-sm text-muted">
-                    راجع بيانات المؤسسة قبل الموافقة أو الرفض.
+                    {t('hrApprovals.requestsHint')}
                   </p>
                 </div>
 
@@ -176,15 +178,15 @@ export function HRApprovalsPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-border bg-slate-50">
                     <tr>
-                      <th className="px-4 py-3 font-medium">المؤسسة</th>
+                      <th className="px-4 py-3 font-medium">{t('hrApprovals.organization')}</th>
                       <th className="hidden px-4 py-3 font-medium md:table-cell">
-                        القطاع
+                        {t('hrApprovals.industry')}
                       </th>
                       <th className="hidden px-4 py-3 font-medium lg:table-cell">
-                        مسؤول التواصل
+                        {t('hrApprovals.contactOwner')}
                       </th>
-                      <th className="px-4 py-3 font-medium">الحالة</th>
-                      <th className="px-4 py-3 font-medium">تاريخ التسجيل</th>
+                      <th className="px-4 py-3 font-medium">{t('hrApprovals.status')}</th>
+                      <th className="px-4 py-3 font-medium">{t('hrApprovals.registered')}</th>
                     </tr>
                   </thead>
 
@@ -219,21 +221,21 @@ export function HRApprovalsPage() {
 
                           <td className="hidden px-4 py-3 lg:table-cell">
                             <p className="font-medium">
-                              {getContactName(org)}
+                              {getContactName(org) || t('common.notAvailable')}
                             </p>
                             <p className="text-xs text-muted">
-                              {getContactEmail(org)}
+                              {getContactEmail(org) || t('common.notAvailable')}
                             </p>
                           </td>
 
                           <td className="px-4 py-3">
                             <Badge variant="warning">
-                              {org.status || 'Pending Review'}
+                              {translateStatus(org.status || 'pending', t)}
                             </Badge>
                           </td>
 
                           <td className="px-4 py-3 text-muted">
-                            {formatDate(org.createdAt)}
+                            {formatDate(org.createdAt, lang)}
                           </td>
                         </tr>
                       )
@@ -247,7 +249,7 @@ export function HRApprovalsPage() {
           <Card>
             <CardBody className="space-y-4">
               <h2 className="font-semibold text-foreground">
-                ملف المؤسسة وقرار الاعتماد
+                {t('hrApprovals.profileTitle')}
               </h2>
 
               {selectedOrg ? (
@@ -258,7 +260,7 @@ export function HRApprovalsPage() {
                     </div>
 
                     <p className="text-xs font-medium text-muted">
-                      مؤسسة موارد بشرية قيد الاعتماد
+                      {t('hrApprovals.pendingOrg')}
                     </p>
 
                     <h3 className="mt-1 text-xl font-bold text-foreground">
@@ -273,74 +275,74 @@ export function HRApprovalsPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <MetricCard
                       icon={<Users className="h-4 w-4" />}
-                      label="المرشحون"
+                      label={t('hrApprovals.candidates')}
                       value={selectedOrg.candidatesCount ?? 0}
                     />
                     <MetricCard
                       icon={<ShieldCheck className="h-4 w-4" />}
-                      label="حالة الطلب"
-                      value={selectedOrg.status || 'Pending'}
+                      label={t('hrApprovals.requestStatus')}
+                      value={translateStatus(selectedOrg.status || 'pending', t)}
                     />
                   </div>
 
                   <div className="rounded-xl border border-border p-4">
                     <h3 className="mb-3 font-semibold text-foreground">
-                      معلومات المؤسسة
+                      {t('hrApprovals.organizationInfo')}
                     </h3>
 
                     <div className="space-y-3 text-sm">
                       <InfoRow
                         icon={<Building2 className="h-4 w-4" />}
-                        label="اسم المؤسسة"
+                        label={t('hrApprovals.organizationName')}
                         value={selectedOrg.name}
                       />
                       <InfoRow
                         icon={<Users className="h-4 w-4" />}
-                        label="مسؤول التواصل"
-                        value={getContactName(selectedOrg)}
+                        label={t('hrApprovals.contactOwner')}
+                        value={getContactName(selectedOrg) || t('common.notAvailable')}
                       />
                       <InfoRow
                         icon={<Mail className="h-4 w-4" />}
-                        label="البريد الإلكتروني"
-                        value={getContactEmail(selectedOrg)}
+                        label={t('hrApprovals.email')}
+                        value={getContactEmail(selectedOrg) || t('common.notAvailable')}
                       />
                       <InfoRow
                         icon={<Phone className="h-4 w-4" />}
-                        label="الهاتف"
-                        value={getPhone(selectedOrg)}
+                        label={t('hrApprovals.phone')}
+                        value={getPhone(selectedOrg) || t('common.notAvailable')}
                       />
                       <InfoRow
                         icon={<MapPin className="h-4 w-4" />}
-                        label="الموقع"
-                        value={getLocation(selectedOrg)}
+                        label={t('hrApprovals.location')}
+                        value={getLocation(selectedOrg) || t('common.notAvailable')}
                       />
                       <InfoRow
                         icon={<Building2 className="h-4 w-4" />}
-                        label="عدد الموظفين"
-                        value={selectedOrg.employeeCount ?? 'غير متوفر'}
+                        label={t('hrApprovals.employeeCount')}
+                        value={selectedOrg.employeeCount ?? t('common.notAvailable')}
                       />
                       <InfoRow
                         icon={<ShieldCheck className="h-4 w-4" />}
-                        label="تاريخ التسجيل"
-                        value={formatDate(selectedOrg.createdAt)}
+                        label={t('hrApprovals.registered')}
+                        value={formatDate(selectedOrg.createdAt, lang)}
                       />
                     </div>
                   </div>
 
                   <div className="rounded-xl border border-border p-4">
                     <h3 className="mb-2 font-semibold text-foreground">
-                      نبذة المؤسسة
+                      {t('hrApprovals.organizationBio')}
                     </h3>
                     <p className="text-sm leading-6 text-muted">
                       {selectedOrg.description ||
                         selectedOrg.notes ||
-                        'لا توجد نبذة مضافة لهذه المؤسسة.'}
+                        t('hrApprovals.noBio')}
                     </p>
                   </div>
 
                   <div className="rounded-xl border border-border p-4">
                     <h3 className="mb-3 font-semibold text-foreground">
-                      الموقع الإلكتروني
+                      {t('hrApprovals.website')}
                     </h3>
 
                     {selectedOrg.website ? (
@@ -358,14 +360,14 @@ export function HRApprovalsPage() {
                       </a>
                     ) : (
                       <p className="text-sm text-muted">
-                        لا يوجد موقع إلكتروني مسجل.
+                        {t('hrApprovals.noWebsite')}
                       </p>
                     )}
                   </div>
 
                   <textarea
                     className="min-h-[90px] w-full rounded-lg border border-border px-3 py-2 text-sm"
-                    placeholder="ملاحظات المراجعة، مطلوبة عند الرفض"
+                    placeholder={t('hrApprovals.notesPlaceholder')}
                     value={reviewNotes}
                     onChange={(event) => setReviewNotes(event.target.value)}
                   />
@@ -377,14 +379,14 @@ export function HRApprovalsPage() {
                         {formError ??
                           (review.error instanceof Error
                             ? review.error.message
-                            : 'تعذر حفظ قرار الاعتماد.')}
+                            : t('hrApprovals.saveFailed'))}
                       </span>
                     </div>
                   )}
 
                   <div>
                     <p className="mb-2 text-sm font-medium text-foreground">
-                      إجراء الموافقة / الرفض
+                      {t('verificationQueue.actionArea')}
                     </p>
 
                     <div className="flex gap-2">
@@ -396,7 +398,7 @@ export function HRApprovalsPage() {
                       >
                         <span className="inline-flex items-center gap-2">
                           <XCircle className="h-4 w-4" />
-                          رفض
+                          {t('hrApprovals.reject')}
                         </span>
                       </Button>
 
@@ -407,7 +409,7 @@ export function HRApprovalsPage() {
                       >
                         <span className="inline-flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4" />
-                          موافقة
+                          {t('hrApprovals.approve')}
                         </span>
                       </Button>
                     </div>
@@ -416,11 +418,11 @@ export function HRApprovalsPage() {
               ) : (
                 <p className="text-sm text-muted">
                   {reviewed === 'approved'
-                    ? 'تم اعتماد المؤسسة وتحديث القائمة. '
+                    ? `${t('hrApprovals.approvedMessage')} `
                     : reviewed === 'rejected'
-                      ? 'تم رفض الطلب وتحديث القائمة. '
+                      ? `${t('hrApprovals.rejectedMessage')} `
                       : ''}
-                  اختر مؤسسة من القائمة لعرض تفاصيل طلب الاعتماد.
+                  {t('hrApprovals.selectHint')}
                 </p>
               )}
             </CardBody>

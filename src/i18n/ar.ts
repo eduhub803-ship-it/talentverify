@@ -191,8 +191,7 @@ export const ar = {
   "landing.eyebrow": "التحقق المؤسسي من المواهب",
   "landing.headlineLine1": "مواهب موثقة.",
   "landing.headlineLine2": "توظيف موثوق.",
-  "landing.description":
-    "TalentVerify منصة مهنية يتم فيها التحقق من الاعتمادات قبل أن يصبح المرشحون قابلين للبحث من قبل مؤسسات الموارد البشرية المعتمدة.",
+  "landing.description": "منصة تربط الموارد البشرية بالكفاءات الموثوقة",
   "landing.joinCandidate": "انضم كمرشح",
   "landing.registerHr": "تسجيل مؤسسة موارد بشرية",
   "Upload & verify": "ارفع وتحقق",

@@ -1,12 +1,14 @@
+import { useContext } from 'react'
 import { Check } from 'lucide-react'
 import type { VerificationStatus } from '@/types/domain'
 import { cn } from '@/lib/utils'
+import { LanguageContext } from '@/context/LanguageContext'
 
 const steps: { key: VerificationStatus; label: string }[] = [
-  { key: 'draft', label: 'Draft' },
-  { key: 'pending', label: 'Submitted' },
-  { key: 'under_review', label: 'Under review' },
-  { key: 'verified', label: 'Verified' },
+  { key: 'draft', label: 'verificationTimeline.draft' },
+  { key: 'pending', label: 'verificationTimeline.submitted' },
+  { key: 'under_review', label: 'verificationTimeline.underReview' },
+  { key: 'verified', label: 'verificationTimeline.verified' },
 ]
 
 const order: VerificationStatus[] = [
@@ -23,6 +25,8 @@ function stepIndex(status: VerificationStatus): number {
 }
 
 export function VerificationTimeline({ status }: { status: VerificationStatus }) {
+  const language = useContext(LanguageContext)
+  const t = language?.t ?? ((key: string) => key)
   const current = stepIndex(status)
   const isRejected = status === 'rejected'
 
@@ -62,8 +66,8 @@ export function VerificationTimeline({ status }: { status: VerificationStatus })
                   rejectedHere && 'text-red-600',
                 )}
               >
-                {step.label}
-                {rejectedHere && ' — Rejected'}
+                {t(step.label)}
+                {rejectedHere && ` — ${t('verificationTimeline.rejected')}`}
               </p>
             </div>
           </li>

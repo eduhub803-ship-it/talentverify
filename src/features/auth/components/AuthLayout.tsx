@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { useContext, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ShieldCheck } from 'lucide-react'
 import { Footer } from '@/features/shared/components/Footer'
+import { LanguageContext } from '@/context/LanguageContext'
 
 export function AuthLayout({
   title,
@@ -12,6 +13,9 @@ export function AuthLayout({
   subtitle: string
   children: ReactNode
 }) {
+  const language = useContext(LanguageContext)
+  const t = language?.t ?? ((key: string) => key)
+
   return (
     <div className="flex min-h-screen flex-col">
       <div className="flex flex-1">
@@ -22,16 +26,15 @@ export function AuthLayout({
         </Link>
         <div>
           <h2 className="text-3xl font-semibold leading-tight">
-            Verified talent.
+            {t('auth.sideHeadlineLine1')}
             <br />
-            Trusted hiring.
+            {t('auth.sideHeadlineLine2')}
           </h2>
           <p className="mt-4 max-w-md text-primary-50/90">
-            A professional platform where credentials are verified before candidates
-            become visible to approved HR organizations.
+            {t('auth.sideDescription')}
           </p>
         </div>
-        <p className="text-sm text-white/60">Enterprise-grade verification</p>
+        <p className="text-sm text-white/60">{t('auth.sideKicker')}</p>
       </div>
       <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-16">
         <div className="mx-auto w-full max-w-md">

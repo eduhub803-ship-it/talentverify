@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { FileText, X } from 'lucide-react'
 import { Badge } from '@/features/shared/components/ui/Badge'
@@ -6,6 +6,7 @@ import { Button } from '@/features/shared/components/ui/Button'
 import { Card, CardBody } from '@/features/shared/components/ui/Card'
 import { FileUpload } from '@/features/shared/components/ui/FileUpload'
 import { cn } from '@/lib/utils'
+import { LanguageContext } from '@/context/LanguageContext'
 import type { CandidateJobApplicationContext, Job } from '@/types/domain'
 import { applyToJob } from '../actions'
 
@@ -25,6 +26,8 @@ export function ApplyJobModal({
   const [message, setMessage] = useState('')
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [useExistingCv, setUseExistingCv] = useState(Boolean(context.existingCvUrl))
+  const language = useContext(LanguageContext)
+  const t = language?.t ?? ((key: string) => key)
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -47,14 +50,16 @@ export function ApplyJobModal({
       <button
         type="button"
         className="fixed inset-0 bg-black/40"
-        aria-label="Close apply form"
+        aria-label={t('applyJob.close')}
         onClick={onClose}
       />
       <Card className="relative z-10 max-h-[calc(100vh-48px)] w-full max-w-xl overflow-y-auto">
         <CardBody className="space-y-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Apply to {job.title}</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                {t('applyJob.title').replace('{title}', job.title)}
+              </h2>
               <p className="mt-1 text-sm text-muted">{job.location}</p>
             </div>
             <Button type="button" variant="ghost" size="sm" onClick={onClose}>
@@ -80,19 +85,21 @@ export function ApplyJobModal({
                 <FileText className="h-5 w-5 shrink-0 text-primary" />
                 <span className="min-w-0">
                   <span className="block text-sm font-medium text-foreground">
-                    Use existing CV
+                    {t('applyJob.useExistingCv')}
                   </span>
                   <span className="block truncate text-xs text-muted">
                     {context.existingCvName}
                   </span>
                 </span>
               </span>
-              {useExistingCv && !cvFile && <Badge variant="primary">Selected</Badge>}
+              {useExistingCv && !cvFile && (
+                <Badge variant="primary">{t('applyJob.selected')}</Badge>
+              )}
             </button>
           )}
 
           <FileUpload
-            label={cvFile ? cvFile.name : 'Upload a CV for this application'}
+            label={cvFile ? cvFile.name : t('applyJob.uploadCv')}
             disabled={mutation.isPending}
             onFile={(file) => {
               setCvFile(file)
@@ -102,11 +109,11 @@ export function ApplyJobModal({
 
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-foreground">
-              Message
+              {t('applyJob.message')}
             </label>
             <textarea
               className="min-h-[110px] w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-              placeholder="Optional message to the hiring team."
+              placeholder={t('applyJob.messagePlaceholder')}
               value={message}
               onChange={(event) => setMessage(event.target.value)}
             />
@@ -116,7 +123,7 @@ export function ApplyJobModal({
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
               {mutation.error instanceof Error
                 ? mutation.error.message
-                : 'Application could not be submitted.'}
+                : t('applyJob.failed')}
             </p>
           )}
 
@@ -127,10 +134,10 @@ export function ApplyJobModal({
               isLoading={mutation.isPending}
               onClick={() => mutation.mutate()}
             >
-              Submit Application
+              {t('applyJob.submit')}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </CardBody>

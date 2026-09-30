@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Sparkles } from 'lucide-react'
 import { PageHeader } from '@/features/shared/components/layout/PageHeader'
@@ -14,9 +14,12 @@ import {
 } from '../actions'
 import { CvEvaluationResults } from '../components/CvEvaluationResults'
 import { UpgradePrompt } from '@/features/shared/components/feedback/UpgradePrompt'
+import { LanguageContext } from '@/context/LanguageContext'
 
 export function CvEvaluationPage() {
   const userId = useAuthStore((s) => s.profile!.id)
+  const language = useContext(LanguageContext)
+  const t = language?.t ?? ((key: string) => key)
   const [jobTitle, setJobTitle] = useState('')
   const [jobDescription, setJobDescription] = useState('')
   const [limitHit, setLimitHit] = useState(false)
@@ -46,11 +49,13 @@ export function CvEvaluationPage() {
   return (
     <div>
       <PageHeader
-        title="AI CV evaluation"
-        description="Compare your profile against a target role and get recruiter-style feedback."
+        title={t('cvEvaluation.title')}
+        description={t('cvEvaluation.description')}
         actions={
           <span className="rounded-full bg-primary-50 px-3 py-1 text-sm font-medium text-primary">
-            {remaining} free evaluation{remaining === 1 ? '' : 's'} left
+            {t('cvEvaluation.remaining')
+              .replace('{count}', String(remaining))
+              .replace('{plural}', remaining === 1 ? '' : 's')}
           </span>
         }
       />
@@ -61,17 +66,19 @@ export function CvEvaluationPage() {
         <Card>
           <CardBody className="space-y-4">
             <Input
-              label="Job title"
+              label={t('cvEvaluation.jobTitle')}
               required
-              placeholder="e.g. Senior Frontend Engineer"
+              placeholder={t('cvEvaluation.jobTitlePlaceholder')}
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
             />
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium">Job description</label>
+              <label className="block text-sm font-medium">
+                {t('cvEvaluation.jobDescription')}
+              </label>
               <textarea
                 className="min-h-[160px] w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                placeholder="Paste key requirements, skills, and responsibilities (optional)"
+                placeholder={t('cvEvaluation.jobDescriptionPlaceholder')}
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
               />
@@ -80,7 +87,7 @@ export function CvEvaluationPage() {
               <p className="text-sm text-red-600">
                 {evaluation.error instanceof Error
                   ? evaluation.error.message
-                  : 'Evaluation failed'}
+                  : t('cvEvaluation.failed')}
               </p>
             )}
             <Button
@@ -90,7 +97,7 @@ export function CvEvaluationPage() {
               onClick={() => evaluation.mutate()}
             >
               <Sparkles className="h-4 w-4" />
-              Evaluate my CV
+              {t('cvEvaluation.submit')}
             </Button>
           </CardBody>
         </Card>

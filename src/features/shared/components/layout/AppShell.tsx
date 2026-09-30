@@ -8,6 +8,7 @@ import { Button } from '../ui/Button'
 import { useAuthStore } from '@/stores/auth-store'
 import { logoutUser } from '@/features/auth/actions'
 import { LanguageContext } from '@/context/LanguageContext'
+import { translateStatus } from '@/i18n/status'
 import {
   fetchMyNotifications,
   markAllNotificationsRead,
@@ -47,6 +48,7 @@ function NotificationBell() {
   const qc = useQueryClient()
   const language = useContext(LanguageContext)
   const t = language?.t ?? ((key: string) => key)
+  const lang = language?.lang ?? 'en'
 
   const queryKey = profile ? notificationsQueryKeys.forUser(profile) : ['notifications']
 
@@ -134,9 +136,9 @@ function NotificationBell() {
                   </div>
                   <p className="mt-1 text-sm text-muted">{notification.message}</p>
                   <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted">
-                    <span>{notification.type}</span>
-                    <span>{notification.priority}</span>
-                    <span>{formatDate(notification.createdAt)}</span>
+                    <span>{translateStatus(notification.type, t)}</span>
+                    <span>{translateStatus(notification.priority, t)}</span>
+                    <span>{formatDate(notification.createdAt, lang)}</span>
                   </div>
                 </button>
               ))
@@ -185,7 +187,7 @@ export function AppShell({
   const language = useContext(LanguageContext)
   const t = language?.t ?? ((key: string) => key)
   const userName = profile?.fullName ?? profile?.email ?? 'TalentVerify'
-  const roleLabel = profile?.role ? `${profile.role.charAt(0).toUpperCase()}${profile.role.slice(1)}` : ''
+  const roleLabel = profile?.role ? t(`common.${profile.role}`) : ''
 
   const handleLogout = async () => {
     await logoutUser()

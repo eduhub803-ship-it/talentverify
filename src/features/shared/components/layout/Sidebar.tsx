@@ -29,7 +29,7 @@ export function Sidebar({
         <button
           type="button"
           className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-          aria-label="Close menu"
+          aria-label={t('common.close')}
           onClick={onMobileClose}
         />
       )}

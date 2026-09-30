@@ -16,6 +16,7 @@ import {
   calculatePassportCompletion,
   emptyCareerPreferences,
   normalizeStringList,
+  translatePassportText,
   type PassportSectionKey,
 } from '../passport'
 import type {
@@ -41,11 +42,11 @@ type ListPatchKey = keyof Pick<
 >
 
 const sections: { key: EditableSection; label: string }[] = [
-  { key: 'professional', label: 'Professional profile' },
-  { key: 'skills', label: 'Skills' },
-  { key: 'career', label: 'Career preferences' },
-  { key: 'background', label: 'Background' },
-  { key: 'seh', label: 'SEH training & credentials' },
+  { key: 'professional', label: 'candidateProfile.section.professional' },
+  { key: 'skills', label: 'candidateProfile.section.skills' },
+  { key: 'career', label: 'candidateProfile.section.career' },
+  { key: 'background', label: 'candidateProfile.section.background' },
+  { key: 'seh', label: 'candidateProfile.section.seh' },
 ]
 
 const skillCategories: SkillCategory[] = [
@@ -69,6 +70,13 @@ const availabilityOptions: AvailabilityTiming[] = [
 
 function newId() {
   return crypto.randomUUID()
+}
+
+function optionLabel(value: string | null | undefined, t: (key: string) => string) {
+  if (!value) return ''
+  const key = `candidateProfile.option.${value}`
+  const label = t(key)
+  return label === key ? value : label
 }
 
 function emptySkill(): CandidateSkill {
@@ -193,7 +201,7 @@ export function CandidateProfilePage() {
     },
     onError: (err) => {
       setSaved(false)
-      setError(err instanceof Error ? err.message : 'This section could not be saved.')
+      setError(err instanceof Error ? err.message : t('candidateProfile.errorSave'))
     },
   })
 
@@ -205,11 +213,11 @@ export function CandidateProfilePage() {
 
   const saveProfessional = () => {
     const linkedin = profileDraft.linkedinUrl.trim()
-    if (!profileDraft.headline.trim()) return setError('Headline is required.')
-    if (profileDraft.headline.length > 120) return setError('Headline must be 120 characters or less.')
-    if (profileDraft.bio.length > 2000) return setError('Summary must be 2000 characters or less.')
+    if (!profileDraft.headline.trim()) return setError(t('candidateProfile.errorHeadlineRequired'))
+    if (profileDraft.headline.length > 120) return setError(t('candidateProfile.errorHeadlineLength'))
+    if (profileDraft.bio.length > 2000) return setError(t('candidateProfile.errorSummaryLength'))
     if (linkedin && !/^https:\/\/(www\.)?linkedin\.com\//i.test(linkedin)) {
-      return setError('Enter a valid LinkedIn URL.')
+      return setError(t('candidateProfile.errorLinkedIn'))
     }
     savePatch({
       headline: profileDraft.headline.trim(),
@@ -229,9 +237,9 @@ export function CandidateProfilePage() {
 
   const addSkill = () => {
     const name = skillDraft.name.trim()
-    if (!name) return setError('Skill name is required.')
+    if (!name) return setError(t('candidateProfile.errorSkillRequired'))
     if (skills.some((skill) => skill.name.toLowerCase() === name.toLowerCase())) {
-      return setError('That skill is already listed.')
+      return setError(t('candidateProfile.errorSkillDuplicate'))
     }
     const next = [...skills, { ...skillDraft, name }]
     setSkills(next)
@@ -240,7 +248,7 @@ export function CandidateProfilePage() {
   }
 
   const removeSkill = (id: string) => {
-    if (!window.confirm('Remove this skill from your Talent Passport?')) return
+    if (!window.confirm(t('candidateProfile.confirmRemoveSkill'))) return
     const next = skills.filter((skill) => skill.id !== id)
     setSkills(next)
     saveSkills(next)
@@ -266,7 +274,7 @@ export function CandidateProfilePage() {
     resetDraft: () => void,
   ) => {
     if (required.some((key) => !String(item[key] ?? '').trim())) {
-      return setError('Complete the required fields before adding this item.')
+      return setError(t('validation.requiredFields'))
     }
     const next = [...current, item]
     setCurrent(next)
@@ -280,7 +288,7 @@ export function CandidateProfilePage() {
     setCurrent: (value: T[]) => void,
     patchKey: ListPatchKey,
   ) => {
-    if (!window.confirm('Delete this item from your Talent Passport?')) return
+    if (!window.confirm(t('candidateProfile.confirmDeleteItem'))) return
     const next = current.filter((item) => item.id !== id)
     setCurrent(next)
     savePatch({ [patchKey]: next })
@@ -308,31 +316,39 @@ export function CandidateProfilePage() {
           <CardBody>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-muted">SEH Talent ID</p>
-                <p className="mt-1 text-xl font-semibold">{profile.sehTalentId ?? 'Assigned after save'}</p>
+                <p className="text-sm text-muted">{t('candidateProfile.talentId')}</p>
+                <p className="mt-1 text-xl font-semibold">
+                  {profile.sehTalentId ?? t('candidateProfile.assignedAfterSave')}
+                </p>
               </div>
               <Badge variant={profile.employerVisible ? 'success' : 'warning'}>
-                {profile.employerVisible ? 'Visible to employers' : 'Hidden from employers'}
+                {profile.employerVisible
+                  ? t('candidateProfile.visibleToEmployers')
+                  : t('candidateProfile.hiddenFromEmployers')}
               </Badge>
             </div>
             <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-100">
               <div className="h-full bg-primary" style={{ width: `${completion.percent}%` }} />
             </div>
             <p className="mt-2 text-sm text-muted">
-              Talent Passport {completion.percent}% complete. Next: {completion.nextAction}.
+              {t('candidateProfile.passportComplete')
+                .replace('{percent}', String(completion.percent))
+                .replace('{nextAction}', translatePassportText(completion.nextAction, t))}
             </p>
           </CardBody>
         </Card>
 
         <Card>
           <CardBody>
-            <h2 className="font-semibold">Missing required information</h2>
+            <h2 className="font-semibold">{t('candidateProfile.missingRequired')}</h2>
             {completion.missingRequired.length === 0 ? (
-              <p className="mt-2 text-sm text-success">Ready for verification submission.</p>
+              <p className="mt-2 text-sm text-success">
+                {t('candidateProfile.readyForSubmission')}
+              </p>
             ) : (
               <ul className="mt-2 space-y-1 text-sm text-muted">
                 {completion.missingRequired.map((item) => (
-                  <li key={item}>{item}</li>
+                  <li key={item}>{translatePassportText(item, t)}</li>
                 ))}
               </ul>
             )}
@@ -349,7 +365,7 @@ export function CandidateProfilePage() {
             variant={activeSection === section.key ? 'primary' : 'secondary'}
             onClick={() => setActiveSection(section.key)}
           >
-            {section.label}
+            {t(section.label)}
           </Button>
         ))}
       </div>
@@ -358,7 +374,7 @@ export function CandidateProfilePage() {
       {saved && !error && (
         <p className="mb-4 inline-flex items-center gap-2 text-sm text-success">
           <Check className="h-4 w-4" />
-          Saved.
+          {t('common.saved')}
         </p>
       )}
 
@@ -366,22 +382,22 @@ export function CandidateProfilePage() {
         <Card>
           <CardBody className="space-y-5">
             <AvatarUpload />
-            <Input label="Email" value={profile.profile?.email ?? ''} disabled readOnly />
-            <Input label="Professional headline" value={profileDraft.headline} onChange={(event) => setProfileDraft({ ...profileDraft, headline: event.target.value })} />
-            <Input label="Location" value={profileDraft.location} onChange={(event) => setProfileDraft({ ...profileDraft, location: event.target.value })} />
-            <Input label="LinkedIn URL" placeholder="https://linkedin.com/in/your-profile" value={profileDraft.linkedinUrl} onChange={(event) => setProfileDraft({ ...profileDraft, linkedinUrl: event.target.value })} />
+            <Input label={t('candidateProfile.email')} value={profile.profile?.email ?? ''} disabled readOnly />
+            <Input label={t('candidateProfile.professionalHeadline')} value={profileDraft.headline} onChange={(event) => setProfileDraft({ ...profileDraft, headline: event.target.value })} />
+            <Input label={t('candidateProfile.location')} value={profileDraft.location} onChange={(event) => setProfileDraft({ ...profileDraft, location: event.target.value })} />
+            <Input label={t('candidateProfile.linkedinUrl')} placeholder={t('candidateProfile.linkedinPlaceholder')} value={profileDraft.linkedinUrl} onChange={(event) => setProfileDraft({ ...profileDraft, linkedinUrl: event.target.value })} />
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium">Professional summary</label>
+              <label className="block text-sm font-medium">{t('candidateProfile.summary')}</label>
               <textarea className="min-h-[130px] w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" value={profileDraft.bio} onChange={(event) => setProfileDraft({ ...profileDraft, bio: event.target.value })} />
             </div>
             <label className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm">
               <input type="checkbox" checked={profileDraft.employerVisible} onChange={(event) => setProfileDraft({ ...profileDraft, employerVisible: event.target.checked })} />
               <span className="flex items-center gap-2">
                 {profileDraft.employerVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                Make my professional profile discoverable to approved employers
+                {t('candidateProfile.makeDiscoverable')}
               </span>
             </label>
-            <Button type="button" isLoading={mutation.isPending} onClick={saveProfessional}>Save professional profile</Button>
+            <Button type="button" isLoading={mutation.isPending} onClick={saveProfessional}>{t('candidateProfile.saveProfessional')}</Button>
           </CardBody>
         </Card>
       )}
@@ -390,12 +406,12 @@ export function CandidateProfilePage() {
         <Card>
           <CardBody className="space-y-5">
             <div className="grid gap-3 md:grid-cols-[1fr_180px_160px_auto]">
-              <Input label="Skill name" value={skillDraft.name} onChange={(event) => setSkillDraft({ ...skillDraft, name: event.target.value })} />
-              <Select label="Category" value={skillDraft.category} options={skillCategories} onChange={(value) => setSkillDraft({ ...skillDraft, category: value as SkillCategory })} />
-              <Select label="Level" value={skillDraft.level ?? ''} options={skillLevels} onChange={(value) => setSkillDraft({ ...skillDraft, level: value as SkillLevel })} />
-              <Button type="button" className="self-end" isLoading={mutation.isPending} onClick={addSkill}><Plus className="h-4 w-4" />Add</Button>
+              <Input label={t('candidateProfile.skillName')} value={skillDraft.name} onChange={(event) => setSkillDraft({ ...skillDraft, name: event.target.value })} />
+              <Select label={t('candidateProfile.category')} value={skillDraft.category} options={skillCategories} t={t} onChange={(value) => setSkillDraft({ ...skillDraft, category: value as SkillCategory })} />
+              <Select label={t('candidateProfile.level')} value={skillDraft.level ?? ''} options={skillLevels} t={t} onChange={(value) => setSkillDraft({ ...skillDraft, level: value as SkillLevel })} />
+              <Button type="button" className="self-end" isLoading={mutation.isPending} onClick={addSkill}><Plus className="h-4 w-4" />{t('common.add')}</Button>
             </div>
-            <ItemList items={skills} render={(skill) => `${skill.name} - ${skill.category}${skill.level ? ` - ${skill.level}` : ''}`} onDelete={removeSkill} />
+            <ItemList items={skills} t={t} render={(skill) => `${skill.name} - ${optionLabel(skill.category, t)}${skill.level ? ` - ${optionLabel(skill.level, t)}` : ''}`} onDelete={removeSkill} />
           </CardBody>
         </Card>
       )}
@@ -403,78 +419,78 @@ export function CandidateProfilePage() {
       {activeSection === 'career' && (
         <Card>
           <CardBody className="space-y-5">
-            <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={career.openToWork} onChange={(event) => setCareer({ ...career, openToWork: event.target.checked })} />Open to work</label>
-            <Input label="Employment types" hint="Comma-separated" value={employmentTypesInput} onChange={(event) => setEmploymentTypesInput(event.target.value)} />
-            <Input label="Preferred fields" hint="Comma-separated" value={fieldsInput} onChange={(event) => setFieldsInput(event.target.value)} />
-            <Input label="Preferred locations" hint="Comma-separated" value={locationsInput} onChange={(event) => setLocationsInput(event.target.value)} />
+            <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={career.openToWork} onChange={(event) => setCareer({ ...career, openToWork: event.target.checked })} />{t('candidateProfile.openToWork')}</label>
+            <Input label={t('candidateProfile.employmentTypes')} hint={t('candidateProfile.commaSeparated')} value={employmentTypesInput} onChange={(event) => setEmploymentTypesInput(event.target.value)} />
+            <Input label={t('candidateProfile.preferredFields')} hint={t('candidateProfile.commaSeparated')} value={fieldsInput} onChange={(event) => setFieldsInput(event.target.value)} />
+            <Input label={t('candidateProfile.preferredLocations')} hint={t('candidateProfile.commaSeparated')} value={locationsInput} onChange={(event) => setLocationsInput(event.target.value)} />
             <div className="grid gap-3 sm:grid-cols-2">
-              <Select label="Remote preference" value={career.remotePreference} options={remotePreferences} onChange={(value) => setCareer({ ...career, remotePreference: value as RemotePreference })} />
-              <Select label="Availability" value={career.availabilityTiming} options={availabilityOptions} onChange={(value) => setCareer({ ...career, availabilityTiming: value as AvailabilityTiming })} />
+              <Select label={t('candidateProfile.remotePreference')} value={career.remotePreference} options={remotePreferences} t={t} onChange={(value) => setCareer({ ...career, remotePreference: value as RemotePreference })} />
+              <Select label={t('candidateProfile.availability')} value={career.availabilityTiming} options={availabilityOptions} t={t} onChange={(value) => setCareer({ ...career, availabilityTiming: value as AvailabilityTiming })} />
             </div>
-            <Button type="button" isLoading={mutation.isPending} onClick={saveCareer}>Save career preferences</Button>
+            <Button type="button" isLoading={mutation.isPending} onClick={saveCareer}>{t('candidateProfile.saveCareer')}</Button>
           </CardBody>
         </Card>
       )}
 
       {activeSection === 'background' && (
         <div className="grid gap-5">
-          <PassportPanel title="Education">
+          <PassportPanel title={t('candidateProfile.education')}>
             <div className="grid gap-3 md:grid-cols-2">
-              <Input label="Institution" value={educationDraft.institution} onChange={(event) => setEducationDraft({ ...educationDraft, institution: event.target.value })} />
-              <Input label="Program" value={educationDraft.program} onChange={(event) => setEducationDraft({ ...educationDraft, program: event.target.value })} />
+              <Input label={t('candidateProfile.institution')} value={educationDraft.institution} onChange={(event) => setEducationDraft({ ...educationDraft, institution: event.target.value })} />
+              <Input label={t('candidateProfile.program')} value={educationDraft.program} onChange={(event) => setEducationDraft({ ...educationDraft, program: event.target.value })} />
             </div>
-            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(educationDraft, ['institution', 'program'], education, setEducation, 'education', () => setEducationDraft(emptyEducation()))}>Add education</Button>
-            <ItemList items={education} render={(item) => `${item.program}, ${item.institution}`} onDelete={(id) => removeItem(id, education, setEducation, 'education')} />
+            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(educationDraft, ['institution', 'program'], education, setEducation, 'education', () => setEducationDraft(emptyEducation()))}>{t('candidateProfile.addEducation')}</Button>
+            <ItemList items={education} t={t} render={(item) => `${item.program}, ${item.institution}`} onDelete={(id) => removeItem(id, education, setEducation, 'education')} />
           </PassportPanel>
 
-          <PassportPanel title="Experience">
+          <PassportPanel title={t('candidateProfile.experience')}>
             <div className="grid gap-3 md:grid-cols-2">
-              <Input label="Company" value={experienceDraft.company} onChange={(event) => setExperienceDraft({ ...experienceDraft, company: event.target.value })} />
-              <Input label="Title" value={experienceDraft.title} onChange={(event) => setExperienceDraft({ ...experienceDraft, title: event.target.value })} />
+              <Input label={t('candidateProfile.company')} value={experienceDraft.company} onChange={(event) => setExperienceDraft({ ...experienceDraft, company: event.target.value })} />
+              <Input label={t('candidateProfile.jobTitle')} value={experienceDraft.title} onChange={(event) => setExperienceDraft({ ...experienceDraft, title: event.target.value })} />
             </div>
-            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(experienceDraft, ['company', 'title'], experience, setExperience, 'experience', () => setExperienceDraft(emptyExperience()))}>Add experience</Button>
-            <ItemList items={experience} render={(item) => `${item.title}, ${item.company}`} onDelete={(id) => removeItem(id, experience, setExperience, 'experience')} />
+            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(experienceDraft, ['company', 'title'], experience, setExperience, 'experience', () => setExperienceDraft(emptyExperience()))}>{t('candidateProfile.addExperience')}</Button>
+            <ItemList items={experience} t={t} render={(item) => `${item.title}, ${item.company}`} onDelete={(id) => removeItem(id, experience, setExperience, 'experience')} />
           </PassportPanel>
 
-          <PassportPanel title="Languages and projects">
+          <PassportPanel title={t('candidateProfile.languagesProjects')}>
             <div className="grid gap-3 md:grid-cols-[1fr_180px_auto]">
-              <Input label="Language" value={languageDraft.name} onChange={(event) => setLanguageDraft({ ...languageDraft, name: event.target.value })} />
-              <Select label="Level" value={languageDraft.level} options={skillLevels} onChange={(value) => setLanguageDraft({ ...languageDraft, level: value as SkillLevel })} />
-              <Button type="button" size="sm" className="self-end" isLoading={mutation.isPending} onClick={() => addItem(languageDraft, ['name'], languages, setLanguages, 'languages', () => setLanguageDraft(emptyLanguage()))}>Add language</Button>
+              <Input label={t('candidateProfile.language')} value={languageDraft.name} onChange={(event) => setLanguageDraft({ ...languageDraft, name: event.target.value })} />
+              <Select label={t('candidateProfile.level')} value={languageDraft.level} options={skillLevels} t={t} onChange={(value) => setLanguageDraft({ ...languageDraft, level: value as SkillLevel })} />
+              <Button type="button" size="sm" className="self-end" isLoading={mutation.isPending} onClick={() => addItem(languageDraft, ['name'], languages, setLanguages, 'languages', () => setLanguageDraft(emptyLanguage()))}>{t('candidateProfile.addLanguage')}</Button>
             </div>
-            <ItemList items={languages} render={(item) => `${item.name} - ${item.level}`} onDelete={(id) => removeItem(id, languages, setLanguages, 'languages')} />
+            <ItemList items={languages} t={t} render={(item) => `${item.name} - ${optionLabel(item.level, t)}`} onDelete={(id) => removeItem(id, languages, setLanguages, 'languages')} />
             <div className="grid gap-3 md:grid-cols-2">
-              <Input label="Project name" value={projectDraft.name} onChange={(event) => setProjectDraft({ ...projectDraft, name: event.target.value })} />
-              <Input label="Project URL" value={projectDraft.url ?? ''} onChange={(event) => setProjectDraft({ ...projectDraft, url: event.target.value })} />
+              <Input label={t('candidateProfile.projectName')} value={projectDraft.name} onChange={(event) => setProjectDraft({ ...projectDraft, name: event.target.value })} />
+              <Input label={t('candidateProfile.projectUrl')} value={projectDraft.url ?? ''} onChange={(event) => setProjectDraft({ ...projectDraft, url: event.target.value })} />
             </div>
-            <Input label="Project description" value={projectDraft.description} onChange={(event) => setProjectDraft({ ...projectDraft, description: event.target.value })} />
-            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(projectDraft, ['name', 'description'], projects, setProjects, 'projects', () => setProjectDraft(emptyProject()))}>Add project</Button>
-            <ItemList items={projects} render={(item) => item.name} onDelete={(id) => removeItem(id, projects, setProjects, 'projects')} />
+            <Input label={t('candidateProfile.projectDescription')} value={projectDraft.description} onChange={(event) => setProjectDraft({ ...projectDraft, description: event.target.value })} />
+            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(projectDraft, ['name', 'description'], projects, setProjects, 'projects', () => setProjectDraft(emptyProject()))}>{t('candidateProfile.addProject')}</Button>
+            <ItemList items={projects} t={t} render={(item) => item.name} onDelete={(id) => removeItem(id, projects, setProjects, 'projects')} />
           </PassportPanel>
         </div>
       )}
 
       {activeSection === 'seh' && (
         <div className="grid gap-5">
-          <PassportPanel title="SEH training records">
+          <PassportPanel title={t('candidateProfile.trainingRecords')}>
             <div className="grid gap-3 md:grid-cols-3">
-              <Input label="Program" value={trainingDraft.program} onChange={(event) => setTrainingDraft({ ...trainingDraft, program: event.target.value })} />
-              <Input label="Provider" value={trainingDraft.provider} onChange={(event) => setTrainingDraft({ ...trainingDraft, provider: event.target.value })} />
-              <Input label="Completion date" value={trainingDraft.completionDate ?? ''} onChange={(event) => setTrainingDraft({ ...trainingDraft, completionDate: event.target.value })} />
+              <Input label={t('candidateProfile.program')} value={trainingDraft.program} onChange={(event) => setTrainingDraft({ ...trainingDraft, program: event.target.value })} />
+              <Input label={t('candidateProfile.provider')} value={trainingDraft.provider} onChange={(event) => setTrainingDraft({ ...trainingDraft, provider: event.target.value })} />
+              <Input label={t('candidateProfile.completionDate')} value={trainingDraft.completionDate ?? ''} onChange={(event) => setTrainingDraft({ ...trainingDraft, completionDate: event.target.value })} />
             </div>
-            <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={trainingDraft.verifiedBySeh} onChange={(event) => setTrainingDraft({ ...trainingDraft, verifiedBySeh: event.target.checked })} />Mark as SEH-verified training</label>
-            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(trainingDraft, ['program', 'provider'], sehTraining, setSehTraining, 'sehTraining', () => setTrainingDraft(emptyTraining()))}>Add training</Button>
-            <ItemList items={sehTraining} render={(item) => `${item.program} - ${item.provider}${item.verifiedBySeh ? ' - SEH verified' : ''}`} onDelete={(id) => removeItem(id, sehTraining, setSehTraining, 'sehTraining')} />
+            <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={trainingDraft.verifiedBySeh} onChange={(event) => setTrainingDraft({ ...trainingDraft, verifiedBySeh: event.target.checked })} />{t('candidateProfile.markSehVerified')}</label>
+            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(trainingDraft, ['program', 'provider'], sehTraining, setSehTraining, 'sehTraining', () => setTrainingDraft(emptyTraining()))}>{t('candidateProfile.addTraining')}</Button>
+            <ItemList items={sehTraining} t={t} render={(item) => `${item.program} - ${item.provider}${item.verifiedBySeh ? ` - ${t('candidateProfile.sehVerified')}` : ''}`} onDelete={(id) => removeItem(id, sehTraining, setSehTraining, 'sehTraining')} />
           </PassportPanel>
 
-          <PassportPanel title="Credentials">
+          <PassportPanel title={t('candidateProfile.credentials')}>
             <div className="grid gap-3 md:grid-cols-3">
-              <Input label="Credential" value={credentialDraft.name} onChange={(event) => setCredentialDraft({ ...credentialDraft, name: event.target.value })} />
-              <Input label="Issuer" value={credentialDraft.issuer} onChange={(event) => setCredentialDraft({ ...credentialDraft, issuer: event.target.value })} />
-              <Input label="Issue date" value={credentialDraft.issueDate ?? ''} onChange={(event) => setCredentialDraft({ ...credentialDraft, issueDate: event.target.value })} />
+              <Input label={t('candidateProfile.credential')} value={credentialDraft.name} onChange={(event) => setCredentialDraft({ ...credentialDraft, name: event.target.value })} />
+              <Input label={t('candidateProfile.issuer')} value={credentialDraft.issuer} onChange={(event) => setCredentialDraft({ ...credentialDraft, issuer: event.target.value })} />
+              <Input label={t('candidateProfile.issueDate')} value={credentialDraft.issueDate ?? ''} onChange={(event) => setCredentialDraft({ ...credentialDraft, issueDate: event.target.value })} />
             </div>
-            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(credentialDraft, ['name', 'issuer'], credentials, setCredentials, 'credentials', () => setCredentialDraft(emptyCredential()))}>Add credential</Button>
-            <ItemList items={credentials} render={(item) => `${item.name} - ${item.issuer}`} onDelete={(id) => removeItem(id, credentials, setCredentials, 'credentials')} />
+            <Button type="button" size="sm" isLoading={mutation.isPending} onClick={() => addItem(credentialDraft, ['name', 'issuer'], credentials, setCredentials, 'credentials', () => setCredentialDraft(emptyCredential()))}>{t('candidateProfile.addCredential')}</Button>
+            <ItemList items={credentials} t={t} render={(item) => `${item.name} - ${item.issuer}`} onDelete={(id) => removeItem(id, credentials, setCredentials, 'credentials')} />
           </PassportPanel>
         </div>
       )}
@@ -486,11 +502,13 @@ function Select({
   label,
   value,
   options,
+  t,
   onChange,
 }: {
   label: string
   value: string
   options: string[]
+  t: (key: string) => string
   onChange: (value: string) => void
 }) {
   return (
@@ -503,7 +521,7 @@ function Select({
       >
         {options.map((option) => (
           <option key={option} value={option}>
-            {option}
+            {optionLabel(option, t)}
           </option>
         ))}
       </select>
@@ -525,13 +543,15 @@ function PassportPanel({ title, children }: { title: string; children: React.Rea
 function ItemList<T extends { id: string }>({
   items,
   render,
+  t,
   onDelete,
 }: {
   items: T[]
   render: (item: T) => string
+  t: (key: string) => string
   onDelete: (id: string) => void
 }) {
-  if (!items.length) return <p className="text-sm text-muted">No items added yet.</p>
+  if (!items.length) return <p className="text-sm text-muted">{t('candidateProfile.noItems')}</p>
   return (
     <ul className="divide-y divide-border rounded-lg border border-border">
       {items.map((item) => (
@@ -539,7 +559,7 @@ function ItemList<T extends { id: string }>({
           <span>{render(item)}</span>
           <Button type="button" size="sm" variant="ghost" onClick={() => onDelete(item.id)}>
             <Trash2 className="h-4 w-4" />
-            Delete
+            {t('common.delete')}
           </Button>
         </li>
       ))}

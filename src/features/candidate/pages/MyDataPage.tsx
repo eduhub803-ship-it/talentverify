@@ -1,24 +1,29 @@
-import { useEffect, useState, useContext } from 'react'
+import { useCallback, useEffect, useState, useContext } from 'react'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/features/shared/components/ui/Button'
 
+interface CandidateDataExport {
+  profile: unknown
+  candidate: unknown
+  documents: unknown[]
+  applications: unknown[]
+  careerServices: unknown[]
+}
+
 export function MyDataPage() {
   const profile = useAuthStore((s) => s.profile)
   const langCtx = useContext(LanguageContext)
   const language = langCtx?.lang || 'en'
+  const t = langCtx?.t ?? ((key: string) => key)
   const isRTL = language === 'ar'
 
-  const [data, setData] = useState<Record<string, any> | null>(null)
+  const [data, setData] = useState<CandidateDataExport | null>(null)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [profile?.id])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!profile?.id || !supabase) return
     try {
       setLoading(true)
@@ -48,7 +53,15 @@ export function MyDataPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [profile])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadData()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadData])
 
   const handleExport = () => {
     if (!data || !profile) return
@@ -75,44 +88,46 @@ export function MyDataPage() {
   }
 
   if (loading) {
-    return <div className="py-12 text-center text-slate-600">Loading your data...</div>
+    return <div className="py-12 text-center text-slate-600">{t('myData.loading')}</div>
   }
-
-  const t = getTranslations(language)
 
   return (
     <div className={`space-y-8 py-8 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">{t.title}</h1>
-        <p className="mt-2 text-slate-600">{t.description}</p>
+        <h1 className="text-3xl font-bold text-slate-900">{t('myData.title')}</h1>
+        <p className="mt-2 text-slate-600">{t('myData.description')}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Section
-          title={t.profile}
+          title={t('myData.profile')}
           data={data?.profile}
           expand={language === 'en'}
+          t={t}
         />
         <Section
-          title={t.candidate}
+          title={t('myData.candidate')}
           data={data?.candidate}
           expand={language === 'en'}
+          t={t}
         />
         <Section
-          title={t.documents}
+          title={t('myData.documents')}
           data={{ count: data?.documents?.length || 0 }}
           expand={false}
+          t={t}
         />
         <Section
-          title={t.applications}
+          title={t('myData.applications')}
           data={{ count: data?.applications?.length || 0 }}
           expand={false}
+          t={t}
         />
       </div>
 
       <div className="flex gap-3 border-t pt-6">
         <Button onClick={handleExport} disabled={exporting}>
-          {exporting ? 'Exporting...' : 'Export as JSON'}
+          {exporting ? t('myData.exporting') : t('myData.exportJson')}
         </Button>
       </div>
     </div>
@@ -123,13 +138,15 @@ function Section({
   title,
   data,
   expand = false,
+  t,
 }: {
   title: string
-  data: any
+  data: unknown
   expand?: boolean
+  t: (key: string) => string
 }) {
   const [expanded, setExpanded] = useState(expand)
-  const hasData = data && Object.keys(data).length > 0
+  const hasData = typeof data === 'object' && data !== null && Object.keys(data).length > 0
 
   return (
     <div className="rounded-lg border p-4">
@@ -147,32 +164,10 @@ function Section({
               {JSON.stringify(data, null, 2)}
             </pre>
           ) : (
-            <p className="text-sm text-slate-500">No data</p>
+            <p className="text-sm text-slate-500">{t('common.noData')}</p>
           )}
         </div>
       )}
     </div>
   )
-}
-
-function getTranslations(lang: string) {
-  const translations = {
-    en: {
-      title: 'My Data',
-      description: 'View and export your personal information',
-      profile: 'Profile',
-      candidate: 'Talent Passport',
-      documents: 'Documents',
-      applications: 'Applications',
-    },
-    ar: {
-      title: 'بيانات الحساب',
-      description: 'عرض وتصدير معلومات شخصية',
-      profile: 'الملف الشخصي',
-      candidate: 'جواز سفر الموهبة',
-      documents: 'المستندات',
-      applications: 'الطلبات',
-    },
-  }
-  return translations[lang as keyof typeof translations] || translations.en
 }

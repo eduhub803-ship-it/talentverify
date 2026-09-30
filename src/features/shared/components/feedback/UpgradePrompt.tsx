@@ -1,8 +1,13 @@
+import { useContext } from 'react'
 import { Crown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '../ui/Button'
+import { LanguageContext } from '@/context/LanguageContext'
 
 export function UpgradePrompt({ className }: { className?: string }) {
+  const language = useContext(LanguageContext)
+  const t = language?.t ?? ((key: string) => key)
+
   return (
     <div
       className={cn(
@@ -15,16 +20,15 @@ export function UpgradePrompt({ className }: { className?: string }) {
           <Crown className="h-6 w-6" />
         </div>
         <div>
-          <h3 className="font-semibold text-foreground">Upgrade to TalentVerify Pro</h3>
+          <h3 className="font-semibold text-foreground">{t('upgrade.title')}</h3>
           <p className="mt-1 text-sm text-muted">
-            You&apos;ve used your 2 free CV evaluations. Pro unlocks unlimited AI
-            evaluations, priority verification, and advanced insights.
+            {t('upgrade.description')}
           </p>
         </div>
       </div>
       <a href="mailto:sales@talentverify.com?subject=TalentVerify%20Pro%20upgrade">
         <Button type="button" variant="primary">
-          Contact sales
+          {t('upgrade.contactSales')}
         </Button>
       </a>
     </div>

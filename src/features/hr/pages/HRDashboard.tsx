@@ -8,6 +8,7 @@ import { Button } from '@/features/shared/components/ui/Button'
 import { Badge } from '@/features/shared/components/ui/Badge'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
+import { translateStatus } from '@/i18n/status'
 import { fetchHrMembership } from '../actions'
 
 export function HRDashboard() {
@@ -47,7 +48,7 @@ export function HRDashboard() {
               </p>
               {org && (
                 <Badge variant="warning" className="mt-3">
-                  {t('hrDashboard.statusLabel')}: {org.status}
+                  {t('hrDashboard.statusLabel')}: {translateStatus(org.status, t)}
                 </Badge>
               )}
             </div>
@@ -96,7 +97,7 @@ export function HRDashboard() {
                 <dt className="text-muted">{t('hrDashboard.statusLabel')}</dt>
                 <dd>
                   <Badge variant={isApproved ? 'success' : 'warning'}>
-                    {org?.status ?? 'unknown'}
+                    {translateStatus(org?.status, t)}
                   </Badge>
                 </dd>
               </div>

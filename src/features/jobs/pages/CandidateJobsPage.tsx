@@ -10,6 +10,7 @@ import { Button } from '@/features/shared/components/ui/Button'
 import { Card, CardBody } from '@/features/shared/components/ui/Card'
 import { Skeleton } from '@/features/shared/components/ui/Skeleton'
 import { formatDate } from '@/lib/utils'
+import { translateStatus } from '@/i18n/status'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
 import { notificationsQueryKeys } from '@/features/notifications/queryKeys'
@@ -43,6 +44,7 @@ export function CandidateJobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const language = useContext(LanguageContext)
   const t = language?.t ?? ((key: string) => key)
+  const lang = language?.lang ?? 'en'
 
   const [hub, setHub] = useState<JobHub>('all')
 
@@ -149,7 +151,7 @@ export function CandidateJobsPage() {
                       <p className="mt-2 text-sm text-muted">{preview(job.description)}</p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
-                      <Badge variant="success">{job.status}</Badge>
+                      <Badge variant="success">{translateStatus(job.status, t)}</Badge>
                       {job.isExclusive && (
                         <Badge variant="primary">
                           <Sparkles className="me-1 h-3 w-3" />
@@ -212,7 +214,7 @@ export function CandidateJobsPage() {
                         {application && (
                           <p className="mt-1 text-xs text-muted">
                             {t('candidateJobs.appliedOn')}{' '}
-                            {formatDate(application.createdAt)}
+                            {formatDate(application.createdAt, lang)}
                           </p>
                         )}
                       </div>

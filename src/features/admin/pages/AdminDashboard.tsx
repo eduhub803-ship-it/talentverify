@@ -20,18 +20,19 @@ import {
 } from '../actions'
 import { adminQueryKeys } from '../queryKeys'
 import { formatDate } from '@/lib/utils'
+import { translateStatus } from '@/i18n/status'
 import type { HrOrganization, VerificationQueueItem } from '@/types/domain'
 
 type SafeRecord = Record<string, unknown>
 type SafeQueueItem = VerificationQueueItem & SafeRecord
 type SafeOrgItem = HrOrganization & SafeRecord
 
-
-
+const fallbackTranslate = (key: string) => key
 
 export function AdminDashboard() {
   const language = useContext(LanguageContext)
-  const t = language?.t ?? ((key: string) => key)
+  const t = language?.t ?? fallbackTranslate
+  const lang = language?.lang ?? 'en'
 
   const { data: stats } = useQuery({
     queryKey: adminQueryKeys.dashboard,
@@ -269,9 +270,9 @@ export function AdminDashboard() {
                     <tr key={row.key}>
                       <td className="px-4 py-3 font-medium text-foreground">{row.name}</td>
                       <td className="px-4 py-3 text-muted">{row.type}</td>
-                      <td className="px-4 py-3">{row.status}</td>
+                      <td className="px-4 py-3">{translateStatus(row.status, t)}</td>
                       <td className="px-4 py-3 text-muted">
-                        {formatDate(row.lastActivity)}
+                        {formatDate(row.lastActivity, lang)}
                       </td>
                       <td className="px-4 py-3">{row.requiredAction}</td>
                       <td className="px-4 py-3 text-right">
@@ -308,7 +309,9 @@ export function AdminDashboard() {
                     <li key={item.key} className="rounded-lg border border-border p-3">
                       <p className="font-medium text-foreground">{item.label}</p>
                       <p className="text-sm text-muted">{item.subject}</p>
-                      <p className="mt-1 text-xs text-muted">{formatDate(item.date)}</p>
+                      <p className="mt-1 text-xs text-muted">
+                        {formatDate(item.date, lang)}
+                      </p>
                     </li>
                   ))}
                 </ul>

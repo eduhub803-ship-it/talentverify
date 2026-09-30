@@ -37,24 +37,22 @@ const steps = [
 ]
 
 const stats = [
-  { value: '12K+', label: 'Verified candidates' },
-  { value: '850+', label: 'Approved HR teams' },
-  { value: '34K+', label: 'Credentials reviewed' },
+  { value: '12K+', label: 'landing.stat.verifiedCandidates' },
+  { value: '850+', label: 'landing.stat.approvedHrTeams' },
+  { value: '34K+', label: 'landing.stat.credentialsReviewed' },
 ]
 
 const workflow = [
-  'Candidate creates profile',
-  'Documents are reviewed',
-  'Verified badge is issued',
-  'Approved HR teams search talent',
+  'landing.workflow.profile',
+  'landing.workflow.documents',
+  'landing.workflow.badge',
+  'landing.workflow.search',
 ]
 
 export function LandingPage() {
   const navigate = useNavigate()
   const language = useContext(LanguageContext)
-  const languageApi = language as any
-
-  const t = languageApi?.t ?? ((key: string) => key)
+  const t = language?.t ?? ((key: string) => key)
 
   // Redirect password recovery links to /reset-password
   useEffect(() => {
@@ -68,39 +66,11 @@ export function LandingPage() {
     }
   }, [navigate])
 
-  const currentLanguage =
-    languageApi?.language ||
-    languageApi?.locale ||
-    languageApi?.currentLanguage ||
-    localStorage.getItem('language') ||
-    localStorage.getItem('appLanguage') ||
-    'en'
-
+  const currentLanguage = language?.lang ?? 'en'
   const isArabic = currentLanguage === 'ar'
 
   const handleLanguageToggle = () => {
-    const nextLanguage = isArabic ? 'en' : 'ar'
-
-    if (typeof languageApi?.toggleLanguage === 'function') {
-      languageApi.toggleLanguage()
-      return
-    }
-
-    if (typeof languageApi?.setLanguage === 'function') {
-      languageApi.setLanguage(nextLanguage)
-      return
-    }
-
-    if (typeof languageApi?.changeLanguage === 'function') {
-      languageApi.changeLanguage(nextLanguage)
-      return
-    }
-
-    localStorage.setItem('language', nextLanguage)
-    localStorage.setItem('appLanguage', nextLanguage)
-    localStorage.setItem('talentverify_language', nextLanguage)
-
-    window.location.reload()
+    language?.setLang(isArabic ? 'en' : 'ar')
   }
 
   return (
@@ -158,15 +128,15 @@ export function LandingPage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-slate-600">
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary" />
-                Identity verified
+                {t('landing.trust.identity')}
               </span>
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary" />
-                Credential review
+                {t('landing.trust.credentials')}
               </span>
               <span className="flex items-center gap-2">
                 <LockKeyhole className="h-4 w-4 text-primary" />
-                Approval-based HR access
+                {t('landing.trust.hrAccess')}
               </span>
             </div>
           </div>
@@ -180,7 +150,7 @@ export function LandingPage() {
                 <div className="text-3xl font-extrabold text-slate-950">
                   {item.value}
                 </div>
-                <div className="mt-1 text-sm text-slate-500">{item.label}</div>
+                <div className="mt-1 text-sm text-slate-500">{t(item.label)}</div>
               </div>
             ))}
           </div>
@@ -209,10 +179,10 @@ export function LandingPage() {
           <div className="mt-20 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:p-12">
             <div className="text-center">
               <h2 className="text-3xl font-extrabold tracking-tight text-slate-950">
-                How TalentVerify works
+                {t('landing.workflowTitle')}
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-                A private verification workflow built for candidates and approved HR organizations.
+                {t('landing.workflowDescription')}
               </p>
             </div>
 
@@ -222,7 +192,7 @@ export function LandingPage() {
                   <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
                     {index + 1}
                   </div>
-                  <h3 className="font-semibold text-slate-950">{item}</h3>
+                  <h3 className="font-semibold text-slate-950">{t(item)}</h3>
                 </div>
               ))}
             </div>
@@ -241,21 +211,21 @@ export function LandingPage() {
           <footer className="mt-20 border-t border-slate-200 py-8 text-center">
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
               <Link to="/privacy-policy" className="hover:text-primary">
-                Privacy Policy
+                {t('landing.footer.privacy')}
               </Link>
               <Link to="/terms" className="hover:text-primary">
-                Terms & Conditions
+                {t('landing.footer.terms')}
               </Link>
               <Link to="/cookie-policy" className="hover:text-primary">
-                Cookie Policy
+                {t('landing.footer.cookies')}
               </Link>
               <Link to="/verification-policy" className="hover:text-primary">
-                Verification Policy
+                {t('landing.footer.verification')}
               </Link>
             </div>
 
             <p className="mt-4 text-sm text-slate-400">
-              © 2026 TalentVerify. All rights reserved.
+              {t('landing.footer.rights')}
             </p>
           </footer>
         </section>

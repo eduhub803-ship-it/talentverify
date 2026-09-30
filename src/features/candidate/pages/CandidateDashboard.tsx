@@ -28,7 +28,7 @@ import {
   fetchMyDocuments,
 } from '../actions'
 import { fetchCandidateJobApplicationContext } from '@/features/applications/actions'
-import { calculatePassportCompletion } from '../passport'
+import { calculatePassportCompletion, translatePassportText } from '../passport'
 
 const checklist = [
   { key: 'profile', label: 'Complete your profile', to: '/candidate/profile', icon: User },
@@ -125,7 +125,9 @@ export function CandidateDashboard() {
               <p className="mt-2 text-sm text-red-600">{profile.rejectionReason}</p>
             )}
             <p className="mt-3 text-sm text-muted">
-              Talent Passport {completion.percent}% complete. Next: {completion.nextAction}.
+              {t('candidateDashboard.passportComplete')
+                .replace('{percent}', String(completion.percent))
+                .replace('{nextAction}', translatePassportText(completion.nextAction, t))}
             </p>
 
             {completion.missingRequired.length > 0 && (
@@ -135,7 +137,7 @@ export function CandidateDashboard() {
                 </p>
                 <ul className="mt-1 space-y-0.5 text-sm text-muted">
                   {completion.missingRequired.slice(0, 4).map((item) => (
-                    <li key={item}>• {item}</li>
+                    <li key={item}>• {translatePassportText(item, t)}</li>
                   ))}
                 </ul>
               </div>
@@ -193,7 +195,7 @@ export function CandidateDashboard() {
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-muted">Talent Passport</p>
+            <p className="text-sm text-muted">{t('candidateDashboard.talentPassport')}</p>
             <p className="mt-1 text-2xl font-semibold">{completion.percent}%</p>
           </CardBody>
         </Card>

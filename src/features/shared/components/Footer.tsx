@@ -5,22 +5,23 @@ import { LanguageContext } from '@/context/LanguageContext'
 export function Footer() {
   const langCtx = useContext(LanguageContext)
   const language = langCtx?.lang || 'en'
+  const t = langCtx?.t ?? ((key: string) => key)
   const isRTL = language === 'ar'
 
   const links = [
-    { label: language === 'ar' ? 'الخصوصية' : 'Privacy', href: '/legal/privacy' },
-    { label: language === 'ar' ? 'الشروط والأحكام' : 'Terms', href: '/legal/terms' },
-    { label: language === 'ar' ? 'سياسة البيانات' : 'Data Policy', href: '/legal/data-policy' },
+    { label: t('footer.privacy'), href: '/legal/privacy' },
+    { label: t('footer.terms'), href: '/legal/terms' },
+    { label: t('footer.dataPolicy'), href: '/legal/data-policy' },
     {
-      label: language === 'ar' ? 'سياسة بيانات صاحب العمل' : 'Employer Data',
+      label: t('footer.employerData'),
       href: '/legal/employer-data-policy',
     },
     {
-      label: language === 'ar' ? 'الاستخدام المقبول' : 'Acceptable Use',
+      label: t('footer.acceptableUse'),
       href: '/legal/acceptable-use',
     },
     {
-      label: language === 'ar' ? 'الاحتفاظ بالبيانات' : 'Data Retention',
+      label: t('footer.dataRetention'),
       href: '/legal/data-retention',
     },
   ]
@@ -47,14 +48,10 @@ export function Footer() {
 
         <div className="mt-6 border-t pt-6 text-xs text-slate-500">
           <p>
-            {language === 'ar'
-              ? '© 2026 Talent Verify. جميع الحقوق محفوظة.'
-              : '© 2026 Talent Verify. All rights reserved.'}
+            {t('footer.rights')}
           </p>
           <p className="mt-2 text-slate-400">
-            {language === 'ar'
-              ? 'DRAFT — سياسات قيد المراجعة القانونية'
-              : 'DRAFT — Policies under legal review'}
+            {t('footer.legalDraft')}
           </p>
         </div>
       </div>

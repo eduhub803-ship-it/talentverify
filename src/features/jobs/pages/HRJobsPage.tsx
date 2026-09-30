@@ -10,6 +10,7 @@ import { Card, CardBody } from '@/features/shared/components/ui/Card'
 import { Skeleton } from '@/features/shared/components/ui/Skeleton'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
+import { translateStatus } from '@/i18n/status'
 import { fetchHrJobs } from '../actions'
 
 function preview(text: string): string {
@@ -93,7 +94,9 @@ export function HRJobsPage() {
                       <h2 className="font-semibold text-foreground">{job.title}</h2>
                       <p className="mt-2 text-sm text-muted">{preview(job.description)}</p>
                     </div>
-                    <Badge variant={statusVariant(job.status)}>{job.status}</Badge>
+                    <Badge variant={statusVariant(job.status)}>
+                      {translateStatus(job.status, t)}
+                    </Badge>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted">
                     <span className="inline-flex items-center gap-1">

@@ -7,10 +7,12 @@ import { PageHeader } from '@/features/shared/components/layout/PageHeader'
 import { Button } from '@/features/shared/components/ui/Button'
 import { Card, CardBody } from '@/features/shared/components/ui/Card'
 import { Input } from '@/features/shared/components/ui/Input'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Badge } from '@/features/shared/components/ui/Badge'
 import { useAuthStore } from '@/stores/auth-store'
+import { LanguageContext } from '@/context/LanguageContext'
+import { localizeMessage } from '@/i18n/errors'
 import { fetchEmployerPlanUsage } from '@/features/employer/actions'
 import { employerQueryKeys } from '@/features/employer/queryKeys'
 import { OPPORTUNITY_TRACKS } from '@/features/employer/matching'
@@ -31,6 +33,8 @@ function parseRequirements(value?: string): string[] {
 export function CreateJobPage() {
   const profile = useAuthStore((s) => s.profile)
   const userId = profile!.id
+  const language = useContext(LanguageContext)
+  const t = language?.t ?? ((key: string) => key)
   const [isExclusive, setIsExclusive] = useState(false)
   const [tracks, setTracks] = useState<OpportunityTrack[]>([])
 
@@ -86,80 +90,85 @@ export function CreateJobPage() {
         className="mb-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to jobs
+        {t('createJob.backToJobs')}
       </Link>
 
       <PageHeader
-        title="Create Job"
-        description="Add a role candidates can browse and apply to."
+        title={t('createJob.title')}
+        description={t('createJob.description')}
       />
 
       <form onSubmit={handleSubmit((data) => saveJob(data, 'open'))}>
         <Card>
           <CardBody className="space-y-5">
             <Input
-              label="Title"
-              placeholder="e.g. Senior Product Designer"
-              error={errors.title?.message}
+              label={t('createJob.field.title')}
+              placeholder={t('createJob.placeholder.title')}
+              error={localizeMessage(errors.title?.message, t)}
               {...register('title')}
             />
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-foreground">
-                Description
+                {t('createJob.field.description')}
               </label>
               <textarea
                 className="min-h-[140px] w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                placeholder="Describe the role, responsibilities, and team."
+                placeholder={t('createJob.placeholder.description')}
                 {...register('description')}
               />
               {errors.description && (
-                <p className="text-xs text-red-600">{errors.description.message}</p>
+                <p className="text-xs text-red-600">
+                  {localizeMessage(errors.description.message, t)}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-foreground">
-                Requirements
+                {t('createJob.field.requirements')}
               </label>
               <textarea
                 className="min-h-[110px] w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                placeholder="Add one requirement per line, or separate with commas."
+                placeholder={t('createJob.placeholder.requirements')}
                 {...register('requirements')}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <Input
-                label="Experience level"
-                placeholder="e.g. Senior"
-                error={errors.experienceLevel?.message}
+                label={t('createJob.field.experienceLevel')}
+                placeholder={t('createJob.placeholder.experienceLevel')}
+                error={localizeMessage(errors.experienceLevel?.message, t)}
                 {...register('experienceLevel')}
               />
               <Input
-                label="Location"
-                placeholder="e.g. Remote"
-                error={errors.location?.message}
+                label={t('createJob.field.location')}
+                placeholder={t('createJob.placeholder.location')}
+                error={localizeMessage(errors.location?.message, t)}
                 {...register('location')}
               />
               <Input
-                label="Job type"
-                placeholder="e.g. Full-time"
-                error={errors.jobType?.message}
+                label={t('createJob.field.jobType')}
+                placeholder={t('createJob.placeholder.jobType')}
+                error={localizeMessage(errors.jobType?.message, t)}
                 {...register('jobType')}
               />
             </div>
             <div className="space-y-3 rounded-xl border border-border bg-slate-50/60 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium text-foreground">Opportunity hubs</p>
+                <p className="text-sm font-medium text-foreground">
+                  {t('createJob.opportunityHubs')}
+                </p>
                 {planUsage && (
                   <Badge variant={planUsage.jobPosts.reached ? 'danger' : 'default'}>
                     {planUsage.plan === 'pro'
-                      ? 'Pro · unlimited posts'
-                      : `Free · ${planUsage.jobPosts.used}/${planUsage.jobPosts.limit} active posts`}
+                      ? t('createJob.proUnlimited')
+                      : t('createJob.freePosts')
+                          .replace('{used}', String(planUsage.jobPosts.used))
+                          .replace('{limit}', String(planUsage.jobPosts.limit))}
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-muted">
-                Listing a role in a hub helps the right candidates find it. SEH exclusive
-                roles are shown only to verified candidates.
+                {t('createJob.hubsDescription')}
               </p>
               <div className="flex flex-wrap gap-2">
                 {OPPORTUNITY_TRACKS.map((track) => (
@@ -177,11 +186,7 @@ export function CreateJobPage() {
                       )
                     }
                   >
-                    {track === 'ngo'
-                      ? 'NGO & INGO'
-                      : track === 'internship'
-                        ? 'Internship'
-                        : 'Graduate'}
+                    {t(`createJob.track.${track}`)}
                   </Button>
                 ))}
                 <Button
@@ -191,15 +196,17 @@ export function CreateJobPage() {
                   aria-pressed={isExclusive}
                   onClick={() => setIsExclusive((value) => !value)}
                 >
-                  SEH exclusive
+                  {t('createJob.sehExclusive')}
                 </Button>
               </div>
             </div>
 
             {planUsage?.jobPosts.reached && (
               <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                You have reached your Free plan limit of {planUsage.jobPosts.limit} active
-                job posts. Close a job, or contact SEH to upgrade to Pro.
+                {t('createJob.limitReached').replace(
+                  '{limit}',
+                  String(planUsage.jobPosts.limit),
+                )}
               </p>
             )}
 
@@ -207,7 +214,7 @@ export function CreateJobPage() {
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
                 {mutation.error instanceof Error
                   ? mutation.error.message
-                  : 'Job could not be created.'}
+                  : t('createJob.failed')}
               </p>
             )}
             <div className="flex flex-wrap gap-2">
@@ -217,7 +224,7 @@ export function CreateJobPage() {
                 disabled={planUsage?.jobPosts.reached}
               >
                 <Send className="h-4 w-4" />
-                Publish job
+                {t('createJob.publish')}
               </Button>
               <Button
                 type="button"
@@ -225,11 +232,11 @@ export function CreateJobPage() {
                 disabled={mutation.isPending}
                 onClick={handleSubmit((data) => saveJob(data, 'draft'))}
               >
-                Save draft
+                {t('createJob.saveDraft')}
               </Button>
               <Link to="/hr/jobs">
                 <Button type="button" variant="ghost" disabled={mutation.isPending}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Link>
             </div>

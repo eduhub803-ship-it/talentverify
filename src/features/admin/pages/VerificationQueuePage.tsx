@@ -29,6 +29,7 @@ export function VerificationQueuePage() {
   const [reviewed, setReviewed] = useState<string | null>(null)
   const language = useContext(LanguageContext)
   const t = language?.t ?? ((key: string) => key)
+  const lang = language?.lang ?? 'en'
 
   const { data: queue = [], refetch } = useQuery({
     queryKey: adminQueryKeys.verificationQueue,
@@ -73,7 +74,7 @@ export function VerificationQueuePage() {
                   {t('verificationQueue.requestsTitle')}
                 </h2>
                 <p className="text-sm text-muted">
-                  اضغط على المرشح لعرض ملفه الكامل واتخاذ قرار المراجعة.
+                  {t('adminVerification.listHint')}
                 </p>
               </div>
               <Badge variant="warning">{queue.length}</Badge>
@@ -133,7 +134,7 @@ export function VerificationQueuePage() {
 
                         <td className="px-4 py-3">
                           <p className="font-medium">
-                            {item.documentCount} مستند
+                            {item.documentCount} {t('verificationQueue.documentCount')}
                           </p>
                           <p className="text-xs text-muted">
                             {item.documentCount > 0
@@ -147,7 +148,7 @@ export function VerificationQueuePage() {
                         </td>
 
                         <td className="px-4 py-3 text-muted">
-                          {formatDate(item.updatedAt)}
+                          {formatDate(item.updatedAt, lang)}
                         </td>
                       </tr>
                     ))}
@@ -161,7 +162,9 @@ export function VerificationQueuePage() {
         <Card>
           <CardBody className="space-y-4">
             <h2 className="font-semibold text-foreground">
-              {selected ? 'ملف المرشح' : 'قرار المراجعة'}
+              {selected
+                ? t('adminVerification.candidateProfile')
+                : t('adminVerification.reviewDecision')}
             </h2>
 
             {!selected ? (
@@ -170,12 +173,12 @@ export function VerificationQueuePage() {
                   <p className="inline-flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-success">
                     <Check className="h-4 w-4" />
                     {reviewed === 'approved'
-                      ? 'تم اعتماد المرشح وتحديث القائمة.'
-                      : 'تم رفض الطلب وتحديث القائمة.'}
+                      ? t('adminVerification.approvedMessage')
+                      : t('adminVerification.rejectedMessage')}
                   </p>
                 )}
                 <p className="text-sm text-muted">
-                  اختر مرشحًا من القائمة لعرض تفاصيله.
+                  {t('adminVerification.selectCandidateHint')}
                 </p>
               </div>
             ) : (
@@ -190,7 +193,7 @@ export function VerificationQueuePage() {
                     />
                   </div>
                   <p className="text-xs font-medium text-muted">
-                    المرشح قيد المراجعة
+                    {t('adminVerification.reviewingCandidate')}
                   </p>
                   <h3 className="mt-1 text-xl font-bold text-foreground">
                     {selected.fullName}
@@ -205,43 +208,43 @@ export function VerificationQueuePage() {
 
                 <div className="rounded-xl border border-border p-4">
                   <h3 className="mb-3 font-semibold text-foreground">
-                    معلومات أساسية
+                    {t('adminVerification.basicInfo')}
                   </h3>
 
                   <div className="space-y-3 text-sm">
                     <InfoRow
-                      label="الحالة"
+                      label={t('common.status')}
                       value={<StatusBadge status={selected.verificationStatus} />}
                     />
                     <InfoRow
-                      label="المستندات"
-                      value={`${selected.documentCount} مستند`}
+                      label={t('adminVerification.documents')}
+                      value={`${selected.documentCount} ${t('verificationQueue.documentCount')}`}
                     />
                     <InfoRow
-                      label="آخر تحديث"
-                      value={formatDate(selected.updatedAt)}
+                      label={t('adminVerification.updated')}
+                      value={formatDate(selected.updatedAt, lang)}
                     />
                     <InfoRow
-                      label="الموقع"
-                      value={selected.location || 'غير متوفر'}
+                      label={t('adminVerification.location')}
+                      value={selected.location || t('common.notAvailable')}
                     />
                   </div>
                 </div>
 
                 <div className="rounded-xl border border-border p-4">
                   <h3 className="mb-2 font-semibold text-foreground">
-                    النبذة المهنية
+                    {t('adminVerification.professionalSummary')}
                   </h3>
                   <p className="text-sm leading-6 text-muted">
                     {selected.bio ||
                       selected.headline ||
-                      'لا توجد نبذة مهنية مضافة لهذا المرشح.'}
+                      t('adminVerification.noSummary')}
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-border p-4">
                   <h3 className="mb-3 font-semibold text-foreground">
-                    الملفات والروابط
+                    {t('adminVerification.filesLinks')}
                   </h3>
 
                   {links.length > 0 ? (
@@ -261,14 +264,14 @@ export function VerificationQueuePage() {
                     </div>
                   ) : (
                     <p className="text-sm text-muted">
-                      لا توجد ملفات أو روابط ظاهرة من بيانات هذا المرشح.
+                      {t('adminVerification.noLinks')}
                     </p>
                   )}
                 </div>
 
                 <textarea
                   className="min-h-[90px] w-full rounded-lg border border-border px-3 py-2 text-sm"
-                  placeholder="ملاحظات المراجعة، مطلوبة عند الرفض"
+                  placeholder={t('adminVerification.notesPlaceholder')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -279,14 +282,14 @@ export function VerificationQueuePage() {
                     <span>
                       {review.error instanceof Error
                         ? review.error.message
-                        : 'تعذر حفظ قرار المراجعة.'}
+                        : t('adminVerification.saveFailed')}
                     </span>
                   </div>
                 )}
 
                 <div>
                   <p className="mb-2 text-sm font-medium text-foreground">
-                    إجراء الموافقة / الرفض
+                    {t('verificationQueue.actionArea')}
                   </p>
 
                   <div className="flex gap-2">
@@ -301,7 +304,7 @@ export function VerificationQueuePage() {
                         })
                       }
                     >
-                      رفض
+                      {t('verificationQueue.reject')}
                     </Button>
 
                     <Button
@@ -314,7 +317,7 @@ export function VerificationQueuePage() {
                         })
                       }
                     >
-                      موافقة
+                      {t('verificationQueue.approve')}
                     </Button>
                   </div>
                 </div>

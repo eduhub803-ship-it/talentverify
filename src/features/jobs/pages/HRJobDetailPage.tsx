@@ -18,6 +18,7 @@ import { Button } from '@/features/shared/components/ui/Button'
 import { Card, CardBody } from '@/features/shared/components/ui/Card'
 import { Skeleton } from '@/features/shared/components/ui/Skeleton'
 import { formatDate } from '@/lib/utils'
+import { translateStatus } from '@/i18n/status'
 import { useAuthStore } from '@/stores/auth-store'
 import { LanguageContext } from '@/context/LanguageContext'
 import type { ApplicationStatus, Job } from '@/types/domain'
@@ -45,6 +46,7 @@ export function HRJobDetailPage() {
   const qc = useQueryClient()
   const language = useContext(LanguageContext)
   const t = language?.t ?? ((key: string) => key)
+  const lang = language?.lang ?? 'en'
 
   const {
     data: job,
@@ -143,7 +145,7 @@ export function HRJobDetailPage() {
         description={`${job.jobType} ${t('hrJobDetail.in')} ${job.location}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={jobVariant(job.status)}>{job.status}</Badge>
+            <Badge variant={jobVariant(job.status)}>{translateStatus(job.status, t)}</Badge>
             {job.status === 'draft' && (
               <Button
                 size="sm"
@@ -266,11 +268,12 @@ export function HRJobDetailPage() {
                           </p>
                         )}
                         <p className="mt-1 text-xs text-muted">
-                          {t('hrJobDetail.applied')} {formatDate(application.createdAt)}
+                          {t('hrJobDetail.applied')}{' '}
+                          {formatDate(application.createdAt, lang)}
                         </p>
                       </div>
                       <Badge variant={applicationVariant(application.status)}>
-                        {application.status}
+                        {translateStatus(application.status, t, 'application')}
                       </Badge>
                     </div>
                     {application.message && (
